@@ -8,6 +8,25 @@
 - PostgreSQL database
 - Data to display: AFL
 
+## Screenshots
+Home page:
+![](./screenshots/home.png)
+
+Match page:
+![](./screenshots/match.png)
+
+Individual player page:
+![](./screenshots/player.png)
+
+Team page:
+![](./screenshots/team.png)
+
+Player search page:
+![](./screenshots/players.png)
+
+All teams page:
+![](./screenshots/teams.png)
+
 ## Setup
 ```bash
 npm run watch
