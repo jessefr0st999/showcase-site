@@ -7,6 +7,7 @@
 - Flask API server
 - PostgreSQL database
 - Data to display: AFL
+- Deployment using Render
 
 ## Screenshots
 Home page:
@@ -49,7 +50,6 @@ CREATE DATABASE site_db;
 - Teams page showing list of teams
 
 ## TODO
-- Responsive charts
 - Fix API requests to unknown routes
 - 404 page
 - Styling
@@ -57,4 +57,17 @@ CREATE DATABASE site_db;
 - Pagination of home page to show ladder and matches for previous rounds and 
 - Player search string in URL
 - Websocket for updating live data
-- Search for alternate dataset
+- Search for alternate datasets and possibly replace DTLive data:
+  - https://datasportsgroup.com/coverage/australian-football/
+  - https://api.squiggle.com.au/ (no player stats)
+  - https://jimmyday12.github.io/fitzRoy/index.html
+  - https://jimmyday12.github.io/fitzRoy/articles/using-fryzigg-stats.html
+  - https://www.footywire.com/
+  - https://afltables.com (SSR)
+  - https://finalsiren.com (SSR)
+- Check DTLive terms of use
+- Update Render to paid version (database expires June 23 2024) or switch deployment method
+- Update ingest scripts to bulk upsert
+- Better scrollboxes for mobile
+- Prevent site from crashing when a request fails
+- About page with data source

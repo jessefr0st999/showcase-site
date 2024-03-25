@@ -36,6 +36,7 @@ ChartJS.register(
 );
 const BaseChartOptions = class {
   responsive = true;
+  maintainAspectRatio = false;
   plugins = {
     legend: {
       position: 'top',
@@ -46,14 +47,14 @@ const BaseChartOptions = class {
     },
   }
 }
-const chartColours = ['red', 'blue', 'green', 'grey']
+const chartColours = ['red', 'blue', 'green', 'gold'];
 const BaseChartData = class {
   labels = [];
   datasets = ['goals', 'disposals', 'marks', 'tackles'].map((x, i) => ({
     label: x,
     data: [],
     backgroundColor: chartColours[i],
-  }))
+  }));
 }
 const seasonChartOptions = new BaseChartOptions();
 const recentChartOptions = new BaseChartOptions();
@@ -141,12 +142,19 @@ function Player() {
       setRecentStats(values[1]);
       let _seasonChartData = new BaseChartData()
       let _recentChartData = new BaseChartData()
+      _seasonChartData.datasets.slice(1).forEach(x => x.label = `average ${x.label}`);
+      _seasonChartData.datasets.push({
+        label: 'games',
+        data: [],
+        backgroundColor: 'magenta',
+      })
       values[0].toReversed().forEach((x, i) => {
         _seasonChartData.labels[i] = x.season;
         _seasonChartData.datasets[0].data[i] = x.goals;
         _seasonChartData.datasets[1].data[i] = (x.kicks + x.handballs) / x.games;
         _seasonChartData.datasets[2].data[i] = x.marks / x.games;
         _seasonChartData.datasets[3].data[i] = x.tackles / x.games;
+        _seasonChartData.datasets[4].data[i] = x.games;
       })
       values[1].toReversed().forEach((x, i) => {
         _recentChartData.labels[i] = `${getRoundName(x.season, x.match.round, true)} ${x.season}`;
@@ -166,12 +174,16 @@ function Player() {
         <Grid item xs={12} md={6}>{renderMatchHistory(recentStats)}</Grid>
         <Grid item xs={12} md={6}>
           <Card variant={'outlined'}>
-            <Line options={seasonChartOptions} data={seasonChartData} />
+            <div class='chart-wrapper'>
+              <Line options={seasonChartOptions} data={seasonChartData} />
+            </div>
           </Card>
         </Grid>
         <Grid item xs={12} md={6}>
           <Card variant={'outlined'}>
-            <Line options={recentChartOptions} data={recentChartData} />
+            <div class='chart-wrapper'>
+              <Line options={recentChartOptions} data={recentChartData} />
+            </div>
           </Card>
         </Grid>
       </Grid> : null}

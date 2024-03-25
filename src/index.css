@@ -68,3 +68,7 @@ code {
   color: inherit;
   text-decoration: none;
 }
+
+.chart-wrapper {
+  height: 400px !important;
+}
