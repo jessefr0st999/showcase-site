@@ -11,6 +11,7 @@ import Players from './Players';
 import Team from './Team';
 import Match from './Match';
 import Player from './Player';
+import About from './About';
 
 function Menu() {
   return <AppBar position="static">
@@ -19,6 +20,7 @@ function Menu() {
       <Typography variant="h6"><Link to="/">Home</Link></Typography>
       <Typography variant="h6"><Link to="/teams">Teams</Link></Typography>
       <Typography variant="h6"><Link to="/players">Players</Link></Typography>
+      <Typography variant="h6"><Link to="/about">About</Link></Typography>
     </Toolbar>
     <Outlet />
   </AppBar>
@@ -33,6 +35,7 @@ export default function App() {
           <Route path="*" element={<NoPage />} />
           <Route path="/teams" element={<Teams />} />
           <Route path="/players" element={<Players />} />
+          <Route path="/about" element={<About />} />
           <Route path="/team/:teamName" element={<Team />} />
           <Route path="/match/:matchId" element={<Match />} />
           <Route path="/player/:playerId" element={<Player />} />
