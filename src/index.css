@@ -1,0 +1,70 @@
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+.app {
+  background-color: #282c34;
+  min-height: calc(100vh - 64px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 1vmin);
+  color: white;
+  text-align: center;
+}
+
+.app-logo {
+  height: 20vmin;
+  pointer-events: none;
+}
+
+.app-header {
+  height: 10vh;
+  background-color: lightgrey;
+}
+
+.app-link {
+  color: #61dafb;
+}
+
+.matches-container {
+  overflow: auto;
+}
+
+.ladder-container {
+  overflow: auto;
+}
+
+.player-container {
+  overflow: auto;
+}
+
+.players-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.players-container > .MuiGrid-root {
+  justify-content: center;
+}
+
+.team-card {
+  height: 100%;
+}
+
+.MuiToolbar-root a {
+  margin-left: 10px;
+  color: inherit;
+  text-decoration: none;
+}
