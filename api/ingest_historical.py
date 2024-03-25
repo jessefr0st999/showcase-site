@@ -6,7 +6,7 @@ from lxml.etree import XMLParser
 import requests
 import os
 
-from schema import *
+from .schema import *
 
 load_dotenv()
 engine = create_engine(os.getenv('DATABASE_URI'))

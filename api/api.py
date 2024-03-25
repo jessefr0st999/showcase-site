@@ -6,8 +6,8 @@ from marshmallow.fields import Nested, Float as MFloat, Integer as MInteger
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from urllib.parse import unquote
 
-from db import engine
-from schema import *
+from .db import engine
+from .schema import *
 
 def pp_to_limit_offset(pagination_parameters):
     limit = pagination_parameters.page_size

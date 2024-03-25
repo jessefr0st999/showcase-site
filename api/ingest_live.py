@@ -7,7 +7,7 @@ import time
 import os
 import requests
 
-from schema import *
+from .schema import *
 from ingest_historical import get_match_data, calculate_ladder
 
 load_dotenv()

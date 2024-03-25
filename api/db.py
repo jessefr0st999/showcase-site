@@ -1,9 +1,9 @@
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session
 from dotenv import load_dotenv
 import os
 
-from schema import Base, Teams
+from .schema import Base, Teams
 
 load_dotenv()
 engine = create_engine(os.getenv('DATABASE_URI'))
@@ -38,7 +38,7 @@ if __name__ == '__main__':
         session.commit()
 
         # Create materialised view for per-season statistics
-        session.execute('''
+        sql = text('''
             CREATE MATERIALIZED VIEW player_season_stats AS
             SELECT player_id, season,
                 COUNT(kicks) AS games,
@@ -54,3 +54,5 @@ if __name__ == '__main__':
             FROM player_stats
             GROUP BY player_id, season;
         ''')
+        session.execute(sql)
+        session.commit()
