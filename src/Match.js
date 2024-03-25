@@ -16,13 +16,32 @@ const renderPositions = playerStats => {
   if (!playerStats) {
     return null;
   }
+  // Some data lacks position info
+  if (!playerStats[0].position) {
+    const getSurname = x => x.player.name.split('.').slice(-1)[0];
+    playerStats.sort((a, b) => getSurname(a).localeCompare(getSurname(b)));
+    return <TableContainer>
+        <Table size='small'>
+          <TableBody>
+            {(new Array(8)).fill(null).map((_, i) => <TableRow key={i}>
+                {playerStats.slice(3 * i, 3 * (i + 1)).map(x =>
+                  <TableCell align='center' key={x.player.id}>
+                    <Link to={`/player/${x.player.id}`}>{x.player.name}</Link>
+                  </TableCell>)}
+              </TableRow>)}
+          </TableBody>
+        </Table>
+      </TableContainer>
+  }
   const benchPlayers = playerStats.filter(x => x.position == 'INT');
   const subPlayer = playerStats.find(x => x.position == 'SUB');
+  const emgPlayer = playerStats.find(x => x.position == 'EMG');
   const renderPlayerCell = position => {
     const x = playerStats.find(x => x.position == position);
-    return <TableCell align='center'>
+    // Some data has missing players; render a blank cell in their place
+    return x ? <TableCell align='center'>
       <Link to={`/player/${x.player.id}`}>{x.player.name}</Link>
-    </TableCell>
+    </TableCell> : <TableCell align='center'></TableCell>;
   }
   return <TableContainer>
     <Table size='small'>
@@ -77,6 +96,9 @@ const renderPositions = playerStats => {
             </TableCell>) : null}
           {subPlayer ? <TableCell align='center'>
               <Link to={`/player/${subPlayer.player.id}`}>{subPlayer.player.name}</Link> (sub)
+            </TableCell> : null}
+          {emgPlayer ? <TableCell align='center'>
+              <Link to={`/player/${emgPlayer.player.id}`}>{emgPlayer.player.name}</Link> (emg)
             </TableCell> : null}
         </TableRow>
       </TableBody>

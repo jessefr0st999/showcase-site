@@ -56,3 +56,5 @@ CREATE DATABASE site_db;
 - Players page with players searchable by text
 - Pagination of home page to show ladder and matches for previous rounds and 
 - Player search string in URL
+- Websocket for updating live data
+- Search for alternate dataset
