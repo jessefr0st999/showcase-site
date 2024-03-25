@@ -5,15 +5,20 @@ from .api import api_bp
 
 load_dotenv()
 static_path = '../static'
+images_path = '../images'
 templates_path = '../templates'
 
 def create_app():
     app = Flask(__name__)
 
-    # Serve static files (JS, CSS and images)
+    # Serve static files (JS and CSS)
     @app.route('/static/<path>', methods=['GET'])
     def static_proxy(path):
         return send_from_directory(static_path, path)
+    
+    @app.route('/images/<path>', methods=['GET'])
+    def images_proxy(path):
+        return send_from_directory(images_path, path)
 
     # Routes at / managed by client-side routing
     @app.route('/', methods=['GET'])
