@@ -106,6 +106,7 @@ function MatchHistory({recentStats, page, count, onPaginationChange}) {
               <TableCell align='right'>Handballs</TableCell>
               <TableCell align='right'>Marks</TableCell>
               <TableCell align='right'>Tackles</TableCell>
+              <TableCell align='right'>Hitouts</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -122,6 +123,7 @@ function MatchHistory({recentStats, page, count, onPaginationChange}) {
                 <TableCell align='right'>{x.handballs}</TableCell>
                 <TableCell align='right'>{x.marks}</TableCell>
                 <TableCell align='right'>{x.tackles}</TableCell>
+                <TableCell align='right'>{x.hitouts}</TableCell>
               </TableRow>
             )}
           </TableBody>
