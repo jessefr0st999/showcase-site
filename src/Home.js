@@ -53,7 +53,7 @@ function Matches({matches, seasonList, roundList, season, round, onSeasonChange,
             {roundList.map(x => <MenuItem
               key={'round-' + x}
               value={x}
-            >{x}</MenuItem>)}
+            >{getRoundName(season, x)}</MenuItem>)}
           </Select>
         </FormControl>
       </> : null}
@@ -230,7 +230,7 @@ function Home() {
               const newSeason = e.target.value;
               const {min_round, max_round} = dataSpan.find(x => x.season === newSeason);
               setSeason(newSeason);
-              setRoundList([...Array(max_round).keys()].map(x => x + min_round));
+              setRoundList([...Array(max_round + 1 - min_round).keys()].map(x => x + min_round));
             }}
             onRoundChange={e => setRound(e.target.value)}
           ></Matches>

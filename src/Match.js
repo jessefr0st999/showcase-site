@@ -106,8 +106,15 @@ const renderPositions = playerStats => {
   </TableContainer>
 }
 
-const renderMatchInfo = match => {
-  return match ? <Card variant={'outlined'} key={match.id}>
+const renderMatchInfo = (match, homePlayerStats, awayPlayerStats) => {
+  if (!match || !homePlayerStats || !awayPlayerStats) {
+    return null;
+  }
+  const homeGoalkickers = homePlayerStats.filter(x => x.goals > 0)
+    .sort((a, b) => b.goals > a.goals);
+  const awayGoalkickers = awayPlayerStats.filter(x => x.goals > 0)
+    .sort((a, b) => b.goals > a.goals);
+  return <Card variant={'outlined'} key={match.id}>
     <CardContent>
       <Typography gutterBottom variant='h5' component='div'>
         <Link to={`/team/${match.home_team}`}>{match.home_team}</Link>
@@ -118,8 +125,22 @@ const renderMatchInfo = match => {
       <Typography variant='body2' color='text.secondary'>
         {match.location}
       </Typography>
+      <Typography variant='body2'>
+        <b>{match.home_team} goals:</b> {homeGoalkickers
+          .map((x, i) => <span key={'goals-' + x.player_id}>
+            {x.player.name}{x.goals > 1 ? ' ' + x.goals : ''}
+            {i < homeGoalkickers.length - 1 ? ', ' : ''}
+          </span>)}
+      </Typography>
+      <Typography variant='body2'>
+        <b>{match.away_team} goals:</b> {awayGoalkickers
+          .map((x, i) => <span key={'goals-' + x.player_id}>
+            {x.player.name}{x.goals > 1 ? ' ' + x.goals : ''}
+            {i < awayGoalkickers.length - 1 ? ', ' : ''}
+          </span>)}
+      </Typography>
     </CardContent>
-  </Card> : null
+  </Card>
 }
 
 function Match() {
@@ -145,7 +166,7 @@ function Match() {
       {match ? <>
         <h1>{getRoundName(match.season, match.round, false)}{' '}{match.season}</h1>
         <Grid container spacing={2}>  
-          <Grid item xs={12} md={12}>{renderMatchInfo(match)}</Grid>
+          <Grid item xs={12} md={12}>{renderMatchInfo(match, homePlayerStats, awayPlayerStats)}</Grid>
           <Grid item container xs={12} md={12} spacing={2}>
             <Grid item xs={12} md={6}>
               <Card variant={'outlined'}>
