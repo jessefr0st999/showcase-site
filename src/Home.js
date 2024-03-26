@@ -88,7 +88,9 @@ const renderRandomPlayer = randomPlayer => {
             <Link to={`/player/${randomPlayer[0].id}`}>
               {randomPlayer[0].name}
             </Link>
-            {' '}({randomPlayer[0].team}, #{randomPlayer[0].jumper_number})
+            {' '}(<Link to={`/team/${randomPlayer[0].team}`}>
+              {randomPlayer[0].team}
+            </Link>, #{randomPlayer[0].jumper_number})
           </Typography>
           <TableContainer>
             <Table sx={{ minWidth: 400 }} size='small' style={{background: 'white'}}>
