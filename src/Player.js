@@ -44,13 +44,16 @@ const BaseChartOptions = class {
     },
   }
 }
-const chartColours = ['red', 'blue', 'green', 'gold', 'orange'];
+const chartColours = ['red', 'blue', 'gold', 'green', 'orange', 'cyan', 'magenta'];
+const visibleDatasets = ['disposals', 'marks', 'tackles', 'hitouts'];
+const hiddenDatasets = ['kicks', 'handballs', 'goals'];
 const BaseChartData = class {
   labels = [];
-  datasets = ['goals', 'disposals', 'marks', 'tackles', 'hitouts'].map((x, i) => ({
+  datasets = [...visibleDatasets, ...hiddenDatasets].map((x, i) => ({
     label: x,
     data: [],
     backgroundColor: chartColours[i],
+    hidden: hiddenDatasets.includes(x),
   }));
 }
 const seasonChartOptions = new BaseChartOptions();
@@ -66,6 +69,8 @@ const renderPlayerHistory = seasonStats => {
               <TableCell>Season</TableCell>
               <TableCell align='right'>Club</TableCell>
               <TableCell align='right'>Jumper number</TableCell>
+              <TableCell align='right'>Games</TableCell>
+              <TableCell align='right'>Goals</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -76,6 +81,8 @@ const renderPlayerHistory = seasonStats => {
                 <TableCell>{x.season}</TableCell>
                 <TableCell align='right'><Link to={`/team/${x.team}`}>{x.team}</Link></TableCell>
                 <TableCell align='right'>{x.jumper_number}</TableCell>
+                <TableCell align='right'>{x.games}</TableCell>
+                <TableCell align='right'>{x.goals}</TableCell>
               </TableRow>
             )}
           </TableBody>
@@ -155,28 +162,34 @@ function Player() {
       setNumMatches(JSON.parse(values[1]._headers.get('x-pagination')).total);
       let _seasonChartData = new BaseChartData()
       let _recentChartData = new BaseChartData()
-      _seasonChartData.datasets.slice(1).forEach(x => x.label = `av. ${x.label}`);
+      // Label all except goals as average
+      _seasonChartData.datasets.slice(0, -1).forEach(x => x.label = `av. ${x.label}`);
       _seasonChartData.datasets.unshift({
         label: 'games',
         data: [],
-        backgroundColor: 'magenta',
+        backgroundColor: 'black',
+        hidden: true,
       })
       values[0].toReversed().forEach((x, i) => {
         _seasonChartData.labels[i] = x.season;
         _seasonChartData.datasets[0].data[i] = x.games;
-        _seasonChartData.datasets[1].data[i] = x.goals;
-        _seasonChartData.datasets[2].data[i] = (x.kicks + x.handballs) / x.games;
-        _seasonChartData.datasets[3].data[i] = x.marks / x.games;
-        _seasonChartData.datasets[4].data[i] = x.tackles / x.games;
-        _seasonChartData.datasets[5].data[i] = x.hitouts / x.games;
+        _seasonChartData.datasets[1].data[i] = (x.kicks + x.handballs) / x.games;
+        _seasonChartData.datasets[2].data[i] = x.marks / x.games;
+        _seasonChartData.datasets[3].data[i] = x.tackles / x.games;
+        _seasonChartData.datasets[4].data[i] = x.hitouts / x.games;
+        _seasonChartData.datasets[5].data[i] = x.kicks / x.games;
+        _seasonChartData.datasets[6].data[i] = x.handballs / x.games;
+        _seasonChartData.datasets[7].data[i] = x.goals;
       })
       values[1].toReversed().forEach((x, i) => {
         _recentChartData.labels[i] = `${getRoundName(x.season, x.match.round, true)} ${x.season}`;
-        _recentChartData.datasets[0].data[i] = x.goals;
-        _recentChartData.datasets[1].data[i] = (x.kicks + x.handballs);
-        _recentChartData.datasets[2].data[i] = x.marks;
-        _recentChartData.datasets[3].data[i] = x.tackles;
-        _recentChartData.datasets[4].data[i] = x.hitouts;
+        _recentChartData.datasets[0].data[i] = (x.kicks + x.handballs);
+        _recentChartData.datasets[1].data[i] = x.marks;
+        _recentChartData.datasets[2].data[i] = x.tackles;
+        _recentChartData.datasets[3].data[i] = x.hitouts;
+        _recentChartData.datasets[4].data[i] = x.kicks;
+        _recentChartData.datasets[5].data[i] = x.handballs;
+        _recentChartData.datasets[6].data[i] = x.goals;
       })
       setSeasonChartData(_seasonChartData);
       setRecentChartData(_recentChartData);

@@ -65,3 +65,6 @@ CREATE DATABASE site_db;
 - Better scrollboxes for mobile
 - Prevent site from crashing when a request fails
 - Deploy live script
+- Loading spinners
+- Minify the JS
+- Page for comparing players
