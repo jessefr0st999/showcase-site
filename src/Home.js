@@ -13,7 +13,7 @@ import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 
 import { apiRequester, calculateAverage, getRoundName } from './helpers.js';
 
@@ -144,9 +144,12 @@ const renderLadder = ladder => {
       <TableCell align='right'>{row.ladder_points}</TableCell>
       <TableCell align='right'>{Math.round(row.percent * 10, 2) / 10}%</TableCell>
     </TableRow>
-  )
+  );
   return <Card>
     <CardContent>
+      <Typography gutterBottom variant='h5' component='div'>
+        Ladder as of {getRoundName(ladder[0]?.season, ladder[0]?.round, false)} {ladder[0]?.season}
+      </Typography>
       <TableContainer>
         <Table sx={{ minWidth: 400 }} size='small' style={{background: 'white'}}>
           <TableHead>
@@ -173,35 +176,56 @@ const renderLadder = ladder => {
 }
 
 function Home() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [matches, setMatches] = useState([]);
   const [season, setSeason] = useState(null);
   const [round, setRound] = useState(null);
   const [seasonList, setSeasonList] = useState(null);
   const [roundList, setRoundList] = useState(null);
   const [dataSpan, setDataSpan] = useState(null);
-  useEffect(() => {
-    apiRequester({url: currentMatchesUrl})
-      .then(data => {
-        setMatches(data);
+
+  // Helper for running a search
+  // Default to current round if URL params not specified, and update the
+  // season and round states if so
+  const submitSearch = (season, round) => {
+    const url = season && (round || round === 0)
+      ? `${matchesBaseUrl}/${season}/${round}`
+      : currentMatchesUrl;
+    apiRequester({url: url}).then(data => {
+      setMatches(data);
+      setSearchParams({season: season, round: round});
+      // if (!season || !round && data[0]) {
+      if (data[0]) {
         setSeason(data[0].season);
         setRound(data[0].round);
-      })
+      }
+    });
+  }
+  
+  // Observer for dropdown options being changed
+  useEffect(() => {
+    if (season && (round || round === 0)) {
+      submitSearch(season, round)
+    }
+  }, [season, round]);
+
+  // Run a search on page load, attempting to use URL params
+  useEffect(() => {
+    submitSearch(searchParams.get('season'), searchParams.get('round'));
   }, []);
+  
   useEffect(() => {
     apiRequester({url: dataSpanUrl})
       .then(data => {
-        const {min_round, max_round} = data.slice(-1)[0];
+        const seasonInfo = searchParams.get('season')
+          ? data.find(x => x.season == searchParams.get('season'))
+          : data.slice(-1)[0];
+        const {min_round, max_round} = seasonInfo;
         setSeasonList(data.map(x => x.season));
         setRoundList([...Array(max_round + 1 - min_round).keys()].map(x => x + min_round));
         setDataSpan(data);
       })
   }, []);
-  useEffect(() => {
-    if (season && (round || round === 0)) {
-      apiRequester({url: `${matchesBaseUrl}/${season}/${round}`})
-        .then(data => setMatches(data))
-    }
-  }, [season, round]);
   
   const [currentLadder, setCurrentLadder] = useState([]);
   useEffect(() => {
@@ -231,8 +255,11 @@ function Home() {
             onSeasonChange={e => {
               const newSeason = e.target.value;
               const {min_round, max_round} = dataSpan.find(x => x.season === newSeason);
+              const roundList = [...Array(max_round + 1 - min_round).keys()].map(x => x + min_round);
               setSeason(newSeason);
-              setRoundList([...Array(max_round + 1 - min_round).keys()].map(x => x + min_round));
+              setRoundList(roundList);
+              // Default to initial round when changing season
+              setRound(roundList[0]);
             }}
             onRoundChange={e => setRound(e.target.value)}
           ></Matches>

@@ -271,8 +271,12 @@ def current_ladder():
     with Session(engine) as session:
         try:
             round, season = get_current_round(session)
+            # If current round is a finals round, get the last home and away round
+            max_round = session.query(func.max(Ladder.round))\
+                .where(Ladder.season == season)\
+                .one()[0]
             results = session.query(Ladder)\
-                .where(Ladder.season == season, Ladder.round == round)\
+                .where(Ladder.season == season, Ladder.round == min(round, max_round))\
                 .order_by(desc(Ladder.ladder_points), desc(Ladder.percent))\
                 .all()
         except Exception:

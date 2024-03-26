@@ -35,6 +35,9 @@ export const getOrdinal = n => {
 }
   
 export const calculateAverage = (stat, player) => {
+  if (player.games == 0) {
+    return 0;
+  }
   let total;
   if (stat == 'disposals') {
     total = player.kicks + player.handballs;

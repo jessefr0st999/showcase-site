@@ -65,6 +65,9 @@ CREATE DATABASE site_db;
 - Better scrollboxes for mobile
 - Prevent site from crashing when a request fails
 - Deploy live script
-- Loading spinners
+- Loading spinners and placeholder containers
 - Minify the JS
 - Page for comparing players
+  - Stats across last 25 games (matching or non-matching)
+  - Stats across each season (matching or non-matching)
+  - Multiple players and one statistic shown on each chart
