@@ -110,11 +110,10 @@ const renderMatchInfo = match => {
   return match ? <Card variant={'outlined'} key={match.id}>
     <CardContent>
       <Typography gutterBottom variant='h5' component='div'>
-        {getRoundName(match.season, match.round, false)}{' '}{match.season}
-      </Typography>
-      <Typography gutterBottom variant='h5' component='div'>
-        {`${match.home_team} ${match.home_goals}-${match.home_behinds}-${match.home_score}
-          vs ${match.away_team} ${match.away_goals}-${match.away_behinds}-${match.away_score}`}
+        <Link to={`/team/${match.home_team}`}>{match.home_team}</Link>
+        {' '}{match.home_goals}-{match.home_behinds}-{match.home_score}
+        {' '}vs <Link to={`/team/${match.away_team}`}>{match.away_team}</Link>
+        {' '}{match.away_goals}-{match.away_behinds}-{match.away_score}
       </Typography>
       <Typography variant='body2' color='text.secondary'>
         {match.location}
@@ -142,26 +141,35 @@ function Match() {
   }, []);
 
   return (
-    <div className='app'>
-      {match ? <Grid container spacing={2}>  
-        <Grid item xs={12} md={12}>{renderMatchInfo(match)}</Grid>
-        <Grid item container xs={12} md={12} spacing={2}>
-          <Grid item xs={12} md={6}>
-            <Card variant={'outlined'}>
-              <h3><Link to={`/team/${match.home_team}`}>{match.home_team}
-                </Link> (home)</h3>
-              {renderPositions(homePlayerStats)}
-            </Card>
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <Card variant={'outlined'}>
-              <h3><Link to={`/team/${match.away_team}`}>{match.away_team}
-                </Link> (away)</h3>
-              {renderPositions(awayPlayerStats)}
-            </Card>
+    <div className='app' style={{flexDirection: 'column'}}>
+      {match ? <>
+        <h1>{getRoundName(match.season, match.round, false)}{' '}{match.season}</h1>
+        <Grid container spacing={2}>  
+          <Grid item xs={12} md={12}>{renderMatchInfo(match)}</Grid>
+          <Grid item container xs={12} md={12} spacing={2}>
+            <Grid item xs={12} md={6}>
+              <Card variant={'outlined'}>
+                <CardContent>
+                  <Typography variant='h5' component='div'>
+                    <Link to={`/team/${match.home_team}`}>{match.home_team}</Link> (home)
+                  </Typography>
+                  {renderPositions(homePlayerStats)}
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Card variant={'outlined'}>
+                <CardContent>
+                  <Typography variant='h5' component='div'>
+                    <Link to={`/team/${match.away_team}`}>{match.away_team}</Link> (away)
+                  </Typography>
+                  {renderPositions(awayPlayerStats)}
+                </CardContent>
+              </Card>
+            </Grid>
           </Grid>
         </Grid>
-      </Grid> : null}
+      </> : null}
     </div>
   );
 };

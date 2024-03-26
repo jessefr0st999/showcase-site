@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 export const apiRequester = async ({url, method = 'GET', data = null}) => {
   const options = {method: method, headers: {}}
   if (data) {
@@ -10,6 +12,7 @@ export const apiRequester = async ({url, method = 'GET', data = null}) => {
       throw new Error(response.statusText);
     }
     const data = await response.json();
+    data._headers = response.headers;
     return data;
   } catch (error) {
     console.error(error);

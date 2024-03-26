@@ -5,14 +5,17 @@ import Typography from '@mui/material/Typography';
 function About() {
   return (
     <div className='app'>
-      <Card>
+      <Card style={{margin: 'auto'}}>
         <CardContent>
           <Typography>
             All data sourced from <a href='https://www.dtlive.com.au' target='_blank'>DTLive</a>'s
             {' '}<a href='https://www.dtlive.com.au/afl/xml/' target='_blank'>XML feed</a> for AFL.
           </Typography>
           <Typography>
-            Hosting provided by <a href='https://render.com' target='_blank'>Render</a>.
+            Hosting provided by <a href='https://render.com' target='_blank'>Render.com</a>.
+          </Typography>
+          <Typography>
+            Logo made using <a href='https://logo.com' target='_blank'>Logo.com</a>.
           </Typography>
           <Typography>
             Site is currently a work in progress.

@@ -10,28 +10,43 @@ import TableRow from '@mui/material/TableRow';
 import CardContent from '@mui/material/CardContent';
 import Typography from '@mui/material/Typography';
 import Pagination from '@mui/material/Pagination';
-import { CardActionArea } from '@mui/material';
+import Stack from '@mui/material/Stack';
 import { useParams, Link } from 'react-router-dom';
 
 import { apiRequester, getRoundName } from './helpers.js';
 
-const renderMatches = matches => {
-  return <div className='matches-container'>
-    {matches?.map(match =>
-      <Card variant={'outlined'} key={match.id}>
-        <CardContent>
-          <Typography gutterBottom variant='h5' component='div'>
-            {getRoundName(match.season, match.round, false)}
-          </Typography>
-          <Typography variant='body2' color='text.secondary'>
-            <Link to={`/match/${match.id}`}>
-              {`${match.home_team} vs ${match.away_team}`}, {match.location}
-            </Link>
-          </Typography>
-        </CardContent>
-      </Card>
-    )}
-  </div>
+function Matches({matches, page, count, onPaginationChange}) {
+  return <>
+    <Grid container spacing={2}>
+      {matches?.map(match => <Grid item xs={12} key={match.id}>
+        <Card variant={'outlined'} className='match-card'>
+          <CardContent>
+            <Typography gutterBottom variant='h5' component='div'>
+                <Link to={`/match/${match.id}`}>
+                  {`${match.home_team} ${match.home_goals}-${match.home_behinds}-${match.home_score}
+                  vs ${match.away_team} ${match.away_goals}-${match.away_behinds}-${match.away_score}`}
+                </Link>
+            </Typography>
+            <Typography variant='body2' color='text.secondary'>
+              {getRoundName(match.season, match.round, false)} {match.season}, {match.location}
+            </Typography>
+          </CardContent>
+        </Card>
+      </Grid>)}
+      <Grid item xs={12} key={'pagination'}>
+        <Card>
+          <CardContent>
+            <Stack alignItems='center'>
+              <Pagination
+                page={page}
+                count={count}
+                onChange={onPaginationChange}/>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+    </Grid>
+  </>
 }
 
 const renderPlayers = players => {
@@ -44,34 +59,41 @@ const renderPlayers = players => {
       <TableCell align='right'>{row.jumper_number}</TableCell>
     </TableRow>
   )
-  return <div className='ladder-container'>
-    <TableContainer>
-      <Table sx={{ minWidth: 400 }} size='small' style={{background: 'white'}}>
-        <TableHead>
-          <TableRow>
-            <TableCell>Name</TableCell>
-            <TableCell align='right'>Jumper number</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {players.map(x => renderRow(x))}
-        </TableBody>
-      </Table>
-    </TableContainer>
-  </div>
+  return <Card>
+    <CardContent>
+      <TableContainer>
+        <Table size='small' style={{background: 'white'}}>
+          <TableHead>
+            <TableRow>
+              <TableCell>Name</TableCell>
+              <TableCell align='right'>Jumper number</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {players.map(x => renderRow(x))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </CardContent>
+  </Card>
 }
 
 function Team() {
   const { teamName } = useParams();
-  const currentYear = (new Date()).getFullYear();
-  const matchesUrl = `/api/matches_by_team/${currentYear}/${teamName}`;
+  const pageSize = 6;
+  const matchesBaseUrl = `/api/matches_by_team/${teamName}?page_size=${pageSize}`;
   const playersUrl = `/api/players_by_team/${teamName}`;
   const [matches, setMatches] = useState([]);
   const [players, setPlayers] = useState([]);
+  const [page, setPage] = useState(1);
+  const [numMatches, setNumMatches] = useState(1);
   useEffect(() => {
-    apiRequester({url: matchesUrl})
-      .then(data => setMatches(data))
-  }, []);
+    apiRequester({url: `${matchesBaseUrl}&page=${page}`})
+      .then(data => {
+        setMatches(data);
+        setNumMatches(JSON.parse(data._headers.get('x-pagination')).total);
+      });
+  }, [page]);
   useEffect(() => {
     apiRequester({url: playersUrl})
       .then(data => setPlayers(data))
@@ -80,8 +102,15 @@ function Team() {
     <div className='app' style={{flexDirection: 'column'}}>
       <h1>{teamName}</h1>
       <Grid container spacing={2}>
-        <Grid item xs={12} md={6}>{renderMatches(matches)}</Grid>
-        <Grid item xs={12} md={6}>{renderPlayers(players)}</Grid>
+        <Grid item xs={12} md={8}>
+          <Matches
+            matches={matches}
+            page={page}
+            count={Math.ceil(numMatches / pageSize)}
+            onPaginationChange={(e, page) => setPage(page)}
+          ></Matches>
+        </Grid>
+        <Grid item xs={12} md={4}>{renderPlayers(players)}</Grid>
       </Grid>
     </div>
   );

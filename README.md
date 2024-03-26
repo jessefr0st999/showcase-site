@@ -50,13 +50,7 @@ CREATE DATABASE site_db;
 - Teams page showing list of teams
 
 ## TODO
-- Fix API requests to unknown routes
-- 404 page
-- Styling
-- Players page with players searchable by text
-- Pagination of home page to show ladder and matches for previous rounds and 
-- Player search string in URL
-- Websocket for updating live data
+- Check DTLive terms of use
 - Search for alternate datasets and possibly replace DTLive data:
   - https://datasportsgroup.com/coverage/australian-football/
   - https://api.squiggle.com.au/ (no player stats)
@@ -65,9 +59,9 @@ CREATE DATABASE site_db;
   - https://www.footywire.com/
   - https://afltables.com (SSR)
   - https://finalsiren.com (SSR)
-- Check DTLive terms of use
+- Fix API requests to unknown routes
+- Websocket for updating live data
 - Update Render to paid version (database expires June 23 2024) or switch deployment method
-- Update ingest scripts to bulk upsert
 - Better scrollboxes for mobile
 - Prevent site from crashing when a request fails
-- About page with data source
+- Deploy live script

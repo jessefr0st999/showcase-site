@@ -2,7 +2,8 @@ from flask_smorest import Blueprint, abort
 from sqlalchemy import desc, text, or_, and_
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.expression import func
-from marshmallow.fields import Nested, Float as MFloat, Integer as MInteger
+from marshmallow import Schema
+from marshmallow.fields import Nested, Float as MFloat, Integer as MInteger, List
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from urllib.parse import unquote
 
@@ -71,6 +72,14 @@ class LadderSchema(SQLAlchemyAutoSchema):
     percent = MFloat()
     ladder_points = MInteger()
 
+class NumMatchesSchema(Schema):
+    num_matches = MInteger()
+
+class DataSpanSchema(Schema):
+    season = MInteger()
+    min_round = MInteger()
+    max_round = MInteger()
+
 @api_bp.route('/match/<match_id>')
 @api_bp.response(200, MatchesSchema)
 def match(match_id):
@@ -102,7 +111,7 @@ def player(player_id):
         return [schema.dump(x) for x in results]
 
 @api_bp.route('/players/<search_str>')
-@api_bp.paginate(page_size=25)
+@api_bp.paginate(max_page_size=50)
 @api_bp.response(200, PlayerSchema(many=True))
 def search_players(search_str, pagination_parameters):
     limit, offset = pp_to_limit_offset(pagination_parameters)
@@ -114,13 +123,14 @@ def search_players(search_str, pagination_parameters):
                 .where(PlayersBySeason.name.ilike(f'%{search_str}%'))\
                 .group_by(PlayersBySeason.name, PlayersBySeason.id)\
                 .subquery()
-            results = session.query(subquery, PlayersBySeason.team, PlayersBySeason.jumper_number)\
+            query = session.query(subquery, PlayersBySeason.team, PlayersBySeason.jumper_number)\
                 .join(PlayersBySeason, and_(
                         PlayersBySeason.season == subquery.c.season,
                         PlayersBySeason.id == subquery.c.id,
                     ))\
-                .order_by(PlayersBySeason.team)\
-                .limit(limit).offset(offset).all()
+                .order_by(PlayersBySeason.team)
+            pagination_parameters.item_count = query.count()
+            results = query.limit(limit).offset(offset).all()
         except Exception:
             abort(404)
         schema = PlayerSchema()
@@ -198,35 +208,38 @@ def matches_by_round(season, round):
         schema = MatchesSchema()
         return [schema.dump(x) for x in results]
 
-@api_bp.route('/matches_by_team/<season>/<team_name>')
+@api_bp.route('/matches_by_team/<team_name>')
+@api_bp.paginate(max_page_size=50)
 @api_bp.response(200, MatchesSchema(many=True))
-def matches_by_team(season, team_name):
+def matches_by_team(team_name, pagination_parameters):
     team_name = unquote(team_name)
+    limit, offset = pp_to_limit_offset(pagination_parameters)
     with Session(engine) as session:
         try:
-            results = session.query(Matches)\
-                .where(Matches.season == season, or_(
-                    Matches.home_team == team_name, Matches.away_team == team_name
-                ))\
-                .order_by(Matches.id)\
-                .all()
+            query = session.query(Matches)\
+                .where(or_(Matches.home_team == team_name,
+                    Matches.away_team == team_name))\
+                .order_by(desc(Matches.id))
+            pagination_parameters.item_count = query.count()
+            results = query.limit(limit).offset(offset).all()
         except Exception:
             abort(404)
         schema = MatchesSchema()
         return [schema.dump(x) for x in results]
 
 @api_bp.route('/stats_by_player/<player_id>')
-@api_bp.paginate(page_size=25)
+@api_bp.paginate(max_page_size=50)
 @api_bp.response(200, PlayerStatsWithMatchSchema(many=True))
 def stats_by_player(player_id, pagination_parameters):
     limit, offset = pp_to_limit_offset(pagination_parameters)
     with Session(engine) as session:
         try:
-            results = session.query(PlayerStats, Matches)\
+            query = session.query(PlayerStats, Matches)\
                 .where(PlayerStats.player_id == player_id)\
                 .join(Matches, Matches.id == PlayerStats.match_id)\
-                .order_by(desc(PlayerStats.match_id))\
-                .limit(limit).offset(offset).all()
+                .order_by(desc(PlayerStats.match_id))
+            pagination_parameters.item_count = query.count()
+            results = query.limit(limit).offset(offset).all()
         except Exception:
             abort(404)
         matches_schema = MatchesSchema()
@@ -280,3 +293,18 @@ def ladder_by_round(season, round):
             abort(404)
         schema = LadderSchema()
         return [schema.dump(x) for x in results]
+
+@api_bp.route('/data_span')
+@api_bp.response(200, DataSpanSchema(many=True)) 
+def data_span():
+    with Session(engine) as session:
+        try:
+            results = session.query(Matches.season,
+                    func.min(Matches.round.distinct()).label('min_round'),
+                    func.max(Matches.round.distinct()).label('max_round'))\
+                .group_by(Matches.season)\
+                .order_by(Matches.season)\
+                .all()
+        except Exception:
+            abort(404)
+        return [DataSpanSchema().dump(x) for x in results]

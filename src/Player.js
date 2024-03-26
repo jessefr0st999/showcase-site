@@ -10,6 +10,7 @@ import TableRow from '@mui/material/TableRow';
 import CardContent from '@mui/material/CardContent';
 import Typography from '@mui/material/Typography';
 import Pagination from '@mui/material/Pagination';
+import Stack from '@mui/material/Stack';
 import { useParams, Link } from 'react-router-dom';
 import {
   Chart as ChartJS,
@@ -41,16 +42,12 @@ const BaseChartOptions = class {
     legend: {
       position: 'top',
     },
-    title: {
-      display: true,
-      text: 'Chart.js Bar Chart',
-    },
   }
 }
-const chartColours = ['red', 'blue', 'green', 'gold'];
+const chartColours = ['red', 'blue', 'green', 'gold', 'orange'];
 const BaseChartData = class {
   labels = [];
-  datasets = ['goals', 'disposals', 'marks', 'tackles'].map((x, i) => ({
+  datasets = ['goals', 'disposals', 'marks', 'tackles', 'hitouts'].map((x, i) => ({
     label: x,
     data: [],
     backgroundColor: chartColours[i],
@@ -58,40 +55,41 @@ const BaseChartData = class {
 }
 const seasonChartOptions = new BaseChartOptions();
 const recentChartOptions = new BaseChartOptions();
-seasonChartOptions.plugins.title.text = 'Stats by season';
-recentChartOptions.plugins.title.text = 'Recent stats';
 
-const renderPlayerInfo = seasonStats => {
+const renderPlayerHistory = seasonStats => {
   return <Card variant={'outlined'}>
     <CardContent>
-      <Typography variant='h5' component='div'>
-        {seasonStats[0].name}{' '}(<Link to={`/team/${seasonStats[0].team}`}>
-          {seasonStats[0].team}</Link>, #{seasonStats[0].jumper_number})
-      </Typography>
-      <Typography variant='body' component='div'>
-        {seasonStats[0].season} season overview:
-      </Typography>
-      <Typography variant='body2' component='div'>
-        {seasonStats[0].games} games, {' '}
-        {seasonStats[0].goals} goals, {' '}
-        {seasonStats[0].kicks + seasonStats[0].handballs} disposals, {' '}
-        {seasonStats[0].kicks} kicks, {' '}
-        {seasonStats[0].handballs} handballs, {' '}
-        {seasonStats[0].marks} marks, {' '}
-        {seasonStats[0].tackles} tackles
-      </Typography>
+      <TableContainer>
+        <Table size='small'>
+          <TableHead>
+            <TableRow>
+              <TableCell>Season</TableCell>
+              <TableCell align='right'>Club</TableCell>
+              <TableCell align='right'>Jumper number</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {seasonStats.map(x => <TableRow
+                key={'player-' + x.season}
+                sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+              >
+                <TableCell>{x.season}</TableCell>
+                <TableCell align='right'><Link to={`/team/${x.team}`}>{x.team}</Link></TableCell>
+                <TableCell align='right'>{x.jumper_number}</TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
     </CardContent>
   </Card>
 }
 
-const renderMatchHistory = recentStats => {
-  return <Card variant={'outlined'}>
+function MatchHistory({recentStats, page, count, onPaginationChange}) {
+  return <Card variant={'outlined'} className='match-history-card'>
     <CardContent>
-      <Typography variant='h5' component='div'>
-        Last 5 matches
-      </Typography>
       <TableContainer>
-        <Table size='small' style={{background: 'white'}}>
+        <Table size='small'>
           <TableHead>
             <TableRow>
               <TableCell></TableCell>
@@ -104,8 +102,8 @@ const renderMatchHistory = recentStats => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {recentStats.slice(0, 5).map(x => <TableRow
-                key={x.match.id}
+            {recentStats.map(x => <TableRow
+                key={'match-' + x.match.id}
                 sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
               >
                 <TableCell><Link to={`/match/${x.match.id}`}>
@@ -122,39 +120,55 @@ const renderMatchHistory = recentStats => {
           </TableBody>
         </Table>
       </TableContainer>
+      <Stack alignItems='center'>
+        <Pagination
+          page={page}
+          count={count}
+          onChange={onPaginationChange}/>
+      </Stack>
     </CardContent>
   </Card>
 }
 
 function Player() {
   const { playerId } = useParams();
+  const pageSize = 10;
   const seasonStatsUrl = `/api/player/${playerId}`;
-  const recentStatsUrl = `/api/stats_by_player/${playerId}`;
+  const recentStatsBaseUrl = `/api/stats_by_player/${playerId}`;
   const [seasonStats, setSeasonStats] = useState(null);
   const [recentStats, setRecentStats] = useState(null);
+  const [page, setPage] = useState(1);
+  const [numMatches, setNumMatches] = useState(1);
+  useEffect(() => {
+    const url = `${recentStatsBaseUrl}?page_size=${pageSize}&page=${page}`;
+    apiRequester({url: url}).then(data => setRecentStats(data));
+  }, [page]);
+
   const [seasonChartData, setSeasonChartData] = useState(null);
   const [recentChartData, setRecentChartData] = useState(null);
   useEffect(() => {
     const seasonStatsPromise = apiRequester({url: seasonStatsUrl});
-    const recentStatsPromise = apiRequester({url: recentStatsUrl});
+    const recentStatsPromise = apiRequester({url: `${recentStatsBaseUrl}?page_size=25`});
     Promise.all([seasonStatsPromise, recentStatsPromise]).then(values => {
       setSeasonStats(values[0]);
-      setRecentStats(values[1]);
+      setRecentStats(values[1].slice(0, pageSize));
+      setNumMatches(JSON.parse(values[1]._headers.get('x-pagination')).total);
       let _seasonChartData = new BaseChartData()
       let _recentChartData = new BaseChartData()
-      _seasonChartData.datasets.slice(1).forEach(x => x.label = `average ${x.label}`);
-      _seasonChartData.datasets.push({
+      _seasonChartData.datasets.slice(1).forEach(x => x.label = `av. ${x.label}`);
+      _seasonChartData.datasets.unshift({
         label: 'games',
         data: [],
         backgroundColor: 'magenta',
       })
       values[0].toReversed().forEach((x, i) => {
         _seasonChartData.labels[i] = x.season;
-        _seasonChartData.datasets[0].data[i] = x.goals;
-        _seasonChartData.datasets[1].data[i] = (x.kicks + x.handballs) / x.games;
-        _seasonChartData.datasets[2].data[i] = x.marks / x.games;
-        _seasonChartData.datasets[3].data[i] = x.tackles / x.games;
-        _seasonChartData.datasets[4].data[i] = x.games;
+        _seasonChartData.datasets[0].data[i] = x.games;
+        _seasonChartData.datasets[1].data[i] = x.goals;
+        _seasonChartData.datasets[2].data[i] = (x.kicks + x.handballs) / x.games;
+        _seasonChartData.datasets[3].data[i] = x.marks / x.games;
+        _seasonChartData.datasets[4].data[i] = x.tackles / x.games;
+        _seasonChartData.datasets[5].data[i] = x.hitouts / x.games;
       })
       values[1].toReversed().forEach((x, i) => {
         _recentChartData.labels[i] = `${getRoundName(x.season, x.match.round, true)} ${x.season}`;
@@ -162,31 +176,51 @@ function Player() {
         _recentChartData.datasets[1].data[i] = (x.kicks + x.handballs);
         _recentChartData.datasets[2].data[i] = x.marks;
         _recentChartData.datasets[3].data[i] = x.tackles;
+        _recentChartData.datasets[4].data[i] = x.hitouts;
       })
       setSeasonChartData(_seasonChartData);
       setRecentChartData(_recentChartData);
     });
   }, []);
+
   return (
-    <div className='app'>
-      {seasonStats ? <Grid container spacing={2}>
-        <Grid item xs={12} md={6}>{renderPlayerInfo(seasonStats)}</Grid>
-        <Grid item xs={12} md={6}>{renderMatchHistory(recentStats)}</Grid>
-        <Grid item xs={12} md={6}>
-          <Card variant={'outlined'}>
-            <div class='chart-wrapper'>
-              <Line options={seasonChartOptions} data={seasonChartData} />
-            </div>
-          </Card>
+    <div className='app' style={{flexDirection: 'column'}}>
+      {seasonStats ? <>
+        <h1>{seasonStats[0].name}</h1>
+        <Grid container spacing={2}>
+          <Grid item xs={12} md={6}>
+            <Card variant={'outlined'} className='chart-card'>
+              <Typography variant='h5'>
+                Stats by season
+              </Typography>
+              <div>
+                <Line options={seasonChartOptions} data={seasonChartData} />
+              </div>
+            </Card>
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <Card variant={'outlined'} className='chart-card'>
+              <Typography variant='h5'>
+                Recent stats
+              </Typography>
+              <div>
+                <Line options={recentChartOptions} data={recentChartData} />
+              </div>
+            </Card>
+          </Grid>
+          <Grid item xs={12} md={6}>
+            {renderPlayerHistory(seasonStats)}
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <MatchHistory
+              recentStats={recentStats}
+              page={page}
+              count={Math.ceil(numMatches / pageSize)}
+              onPaginationChange={(e, page) => setPage(page)}
+            ></MatchHistory>
+          </Grid>
         </Grid>
-        <Grid item xs={12} md={6}>
-          <Card variant={'outlined'}>
-            <div class='chart-wrapper'>
-              <Line options={recentChartOptions} data={recentChartData} />
-            </div>
-          </Card>
-        </Grid>
-      </Grid> : null}
+      </> : null}
     </div>
   );
 };
