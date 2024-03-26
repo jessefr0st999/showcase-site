@@ -1,5 +1,5 @@
 from dotenv import load_dotenv
-from sqlalchemy import create_engine, desc, and_, or_, text
+from sqlalchemy import create_engine, desc, and_, or_, text, update
 from sqlalchemy.orm import Session
 from sqlalchemy.dialects.postgresql import insert
 from xml.etree import ElementTree
@@ -199,9 +199,14 @@ if __name__ == '__main__':
                 .on_conflict_do_nothing()
             session.execute(query)
             session.commit()
-        print(f'2023: Values upserted for matches with IDs {start_id} to {end_id}')
+        print(f'{season}: Values upserted for matches with IDs {start_id} to {end_id}')
         calculate_ladder(season, latest_round=True)
     with Session(engine) as session:
         sql = text('REFRESH MATERIALIZED VIEW player_season_stats;')
         session.execute(sql)
+        # Fix a player entered with different names
+        query = update(PlayersBySeason)\
+            .where(PlayersBySeason.team == 'Richmond', PlayersBySeason.name == 'D.Smith')\
+            .values(name='D.Eggmolesse-Smith')
+        session.execute(query)
         session.commit()
