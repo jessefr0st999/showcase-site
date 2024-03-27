@@ -22,6 +22,7 @@ class Matches(Base):
     home_behinds = mapped_column(Integer)
     away_goals = mapped_column(Integer)
     away_behinds = mapped_column(Integer)
+    live = mapped_column(Boolean)
     
     @hybrid_property
     def home_score(self):
@@ -31,6 +32,10 @@ class Matches(Base):
     def away_score(self):
         return 6 * self.away_goals + self.away_behinds
 
+# NOTE: Does not handle players changing names, teams or jumper numbers midway
+# through a season. Will have to be updated if a mid-season trade period is
+# introduced or manually handled in the case of a special jumper number in the
+# opening round or a player changing names
 class PlayersBySeason(Base):
     __tablename__ = 'players_by_season'
     id = mapped_column(Integer, primary_key=True)
