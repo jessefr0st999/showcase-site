@@ -8,6 +8,7 @@ import Grid from'@mui/material/Grid';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import Typography from '@mui/material/Typography';
+import { Circle } from '@mui/icons-material';
 import { useParams, Link } from 'react-router-dom';
 
 import { apiRequester, getRoundName } from './helpers.js';
@@ -114,13 +115,16 @@ const renderMatchInfo = (match, homePlayerStats, awayPlayerStats) => {
     .sort((a, b) => b.goals > a.goals);
   const awayGoalkickers = awayPlayerStats.filter(x => x.goals > 0)
     .sort((a, b) => b.goals > a.goals);
-  return <Card variant={'outlined'} key={match.id}>
+  return <Card variant={'outlined'}>
     <CardContent>
-      <Typography gutterBottom variant='h5' component='div'>
-        <Link to={`/team/${match.home_team}`}>{match.home_team}</Link>
-        {' '}{match.home_goals}-{match.home_behinds}-{match.home_score}
-        {' '}vs <Link to={`/team/${match.away_team}`}>{match.away_team}</Link>
-        {' '}{match.away_goals}-{match.away_behinds}-{match.away_score}
+      <Typography gutterBottom variant='h5' component='div' className='live-marker-container'>
+        <span>
+          <Link to={`/team/${match.home_team}`}>{match.home_team}</Link>
+          {' '}{match.home_goals}-{match.home_behinds}-{match.home_score}
+          {' '}vs <Link to={`/team/${match.away_team}`}>{match.away_team}</Link>
+          {' '}{match.away_goals}-{match.away_behinds}-{match.away_score}
+        </span>
+        {match.live ? <Circle className='live-marker'></Circle> : null}
       </Typography>
       <Typography variant='body2' color='text.secondary'>
         {match.location}

@@ -11,6 +11,7 @@ import CardContent from '@mui/material/CardContent';
 import Typography from '@mui/material/Typography';
 import Pagination from '@mui/material/Pagination';
 import Stack from '@mui/material/Stack';
+import { Circle } from '@mui/icons-material';
 import { useParams, Link } from 'react-router-dom';
 
 import { apiRequester, getRoundName } from './helpers.js';
@@ -19,13 +20,14 @@ function Matches({matches, page, count, onPaginationChange}) {
   return <>
     <Grid container spacing={2}>
       {matches?.map(match => <Grid item xs={12} key={match.id}>
-        <Card variant={'outlined'} className='match-card'>
+        <Card variant={'outlined'}>
           <CardContent>
-            <Typography gutterBottom variant='h5' component='div'>
-                <Link to={`/match/${match.id}`}>
-                  {`${match.home_team} ${match.home_goals}-${match.home_behinds}-${match.home_score}
-                  vs ${match.away_team} ${match.away_goals}-${match.away_behinds}-${match.away_score}`}
-                </Link>
+            <Typography gutterBottom variant='h5' component='div' className='live-marker-container'>
+              <Link to={`/match/${match.id}`}>
+                {`${match.home_team} ${match.home_goals}-${match.home_behinds}-${match.home_score}
+                vs ${match.away_team} ${match.away_goals}-${match.away_behinds}-${match.away_score}`}
+              </Link>
+              {match.live ? <Circle className='live-marker'></Circle> : ''}
             </Typography>
             <Typography variant='body2' color='text.secondary'>
               {getRoundName(match.season, match.round, false)} {match.season}, {match.location}

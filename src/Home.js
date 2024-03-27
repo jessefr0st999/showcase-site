@@ -13,7 +13,8 @@ import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
-import { Refresh } from '@mui/icons-material';
+import Tooltip from '@mui/material/Tooltip';
+import { Refresh, Circle } from '@mui/icons-material';
 import { Link, useSearchParams } from 'react-router-dom';
 
 import { apiRequester, calculateAverage, getRoundName } from './helpers.js';
@@ -61,13 +62,14 @@ function Matches({matches, seasonList, roundList, season, round, onSeasonChange,
     </CardContent></Card></Grid>
     {matches.map(match =>
       <Grid item xs={12} key={match.id}>
-        <Card variant={'outlined'} className='match-card'>
+        <Card variant={'outlined'}>
           <CardContent>
-            <Typography gutterBottom variant='h5' component='div'>
+            <Typography gutterBottom variant='h5' component='div' className='live-marker-container'>
               <Link to={`/match/${match.id}`}>
                 {`${match.home_team} ${match.home_goals}-${match.home_behinds}-${match.home_score}
                   vs ${match.away_team} ${match.away_goals}-${match.away_behinds}-${match.away_score}`}
               </Link>
+              {match.live ? <Circle className='live-marker'></Circle> : ''}
             </Typography>
             <Typography variant='body2' color='text.secondary'>
               {match.location}
@@ -96,7 +98,11 @@ const renderRandomPlayer = (randomPlayer, onRefresh) => {
           <Table sx={{ minWidth: 400 }} size='small' style={{background: 'white'}} className='random-player-table'>
             <TableHead>
               <TableRow>
-                <TableCell><Refresh onClick={e => onRefresh()}></Refresh></TableCell>
+                <Tooltip placement='left' title={'New random player'}>
+                  <TableCell>
+                    <Refresh onClick={e => onRefresh()}></Refresh>
+                  </TableCell>
+                </Tooltip>
                 <TableCell align='right'>Games</TableCell>
                 <TableCell align='right'>Goals</TableCell>
                 <TableCell align='right'>Av. disposals</TableCell>

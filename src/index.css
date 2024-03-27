@@ -90,3 +90,19 @@ tr.ladder-divider > td {
 .player-search-table td > svg {
   cursor: pointer;
 }
+
+.live-marker-container {
+  display: flex;
+}
+
+.live-marker-container > *:first-child {
+  margin: auto;
+}
+
+.live-marker-container > .live-marker {
+  margin: auto 0 auto 5px;
+}
+
+.live-marker {
+  fill: green !important;
+}
