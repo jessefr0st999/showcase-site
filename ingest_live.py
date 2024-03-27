@@ -36,8 +36,6 @@ class LiveScheduler:
         if self.active:
             self.current_non_active_runs = 0
         else:
-            print('runs', self.current_non_active_runs,
-                'hour', datetime.now(pytz.timezone('Australia/Melbourne')).hour)
             self.current_non_active_runs += 1
             if self.current_non_active_runs % self.num_non_active_runs != 1:
                 return
@@ -63,8 +61,7 @@ class LiveScheduler:
                 _match_stats, _match_time_stats, _player_stats, _player_season_stats = \
                     get_match_data(match_id)
                 print(f'Match with ID {match_id} found')
-            # except requests.HTTPError:
-            except FileNotFoundError:
+            except requests.HTTPError:
                 print(f'No match found with ID {match_id}')
                 continue
             # If the time in the 4th quarter is the same as the last request,
@@ -125,8 +122,7 @@ class LiveScheduler:
         try:
             match_stats, _, player_stats, player_season_stats = \
                 get_match_data(next_match_id)
-        # except requests.HTTPError:
-        except FileNotFoundError:
+        except requests.HTTPError:
             print(f'No match found with ID {next_match_id}; job exiting')
             return
         with Session(engine) as session:
