@@ -227,7 +227,7 @@ function Players() {
                     {stats.map(x => <MenuItem
                       key={'top-chart-' + x}
                       value={x}
-                    >{x}</MenuItem>)}
+                    >{averageStats.includes(x) ? 'average ' + x : x}</MenuItem>)}
                   </Select>
                 </FormControl>
                 <Tooltip title='Reset chart'>
