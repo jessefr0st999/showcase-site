@@ -14,16 +14,16 @@ engine = create_engine(os.getenv('DATABASE_URI'))
 
 BASE_URL = 'https://www.dtlive.com.au/afl/xml'
 SEASON_MATCH_IDS = {
-    # 2014: (19, 639),
-    # 2015: (667, 873),
-    # 2016: (874, 1107),
-    # 2017: (1135, 1341),
-    # 2018: (1360, 1566),
-    # 2019: (1585, 1791),
-    # 2020: (1810, 2188),
-    # 2021: (2198, 2412),
-    # 2022: (2422, 2628),
-    # 2023: (2638, 2853),
+    2014: (19, 639),
+    2015: (667, 873),
+    2016: (874, 1107),
+    2017: (1135, 1341),
+    2018: (1360, 1566),
+    2019: (1585, 1791),
+    2020: (1810, 2188),
+    2021: (2198, 2412),
+    2022: (2422, 2628),
+    2023: (2638, 2853),
     2024: (2863, 2883),
 }
 MATCH_PROPERTIES_MAP = {
@@ -56,17 +56,11 @@ PLAYER_PROPERTIES_MAP = {
 }
 
 def get_match_data(match_number):
-    ########################################################
-    with open(f'./test_files/{match_number}.xml', 'r') as f:
-        text = f.read()
-    root = ElementTree.fromstring(text.encode('utf-8'),
+    url = f'{BASE_URL}/{match_number}.xml'
+    response = requests.get(url)
+    response.raise_for_status()
+    root = ElementTree.fromstring(response.text.encode('utf-8'),
         parser=XMLParser(encoding='utf-8', recover=True))
-    ########################################################
-    # url = f'{BASE_URL}/{match_number}.xml'
-    # response = requests.get(url)
-    # response.raise_for_status()
-    # root = ElementTree.fromstring(response.text.encode('utf-8'),
-    #     parser=XMLParser(encoding='utf-8', recover=True))
     match_stats = {'id': match_number}
     match_time_stats = {'id': match_number}
     player_stats = []
