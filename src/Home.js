@@ -13,6 +13,7 @@ import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
+import { Refresh } from '@mui/icons-material';
 import { Link, useSearchParams } from 'react-router-dom';
 
 import { apiRequester, calculateAverage, getRoundName } from './helpers.js';
@@ -78,57 +79,55 @@ function Matches({matches, seasonList, roundList, season, round, onSeasonChange,
   </Grid>
 }
 
-const renderRandomPlayer = randomPlayer => {
-  return <div className='player-container'>
-    {randomPlayer ?
-      <Card variant={'outlined'}>
-        <CardContent>
-          <Typography gutterBottom variant='h5' component='div'>
-            Random player:{' '}
-            <Link to={`/player/${randomPlayer[0].id}`}>
-              {randomPlayer[0].name}
-            </Link>
-            {' '}(<Link to={`/team/${randomPlayer[0].team}`}>
-              {randomPlayer[0].team}
-            </Link>, #{randomPlayer[0].jumper_number})
-          </Typography>
-          <TableContainer>
-            <Table sx={{ minWidth: 400 }} size='small' style={{background: 'white'}}>
-              <TableHead>
-                <TableRow>
-                  <TableCell></TableCell>
-                  <TableCell align='right'>Games</TableCell>
-                  <TableCell align='right'>Goals</TableCell>
-                  <TableCell align='right'>Av. disposals</TableCell>
-                  <TableCell align='right'>Av. kicks</TableCell>
-                  <TableCell align='right'>Av. handballs</TableCell>
-                  <TableCell align='right'>Av. marks</TableCell>
-                  <TableCell align='right'>Av. tackles</TableCell>
+const renderRandomPlayer = (randomPlayer, onRefresh) => {
+  return randomPlayer ?
+    <Card variant={'outlined'}>
+      <CardContent>
+        <Typography gutterBottom variant='h5' component='div'>
+          Random player:{' '}
+          <Link to={`/player/${randomPlayer[0].id}`}>
+            {randomPlayer[0].name}
+          </Link>
+          {' '}(<Link to={`/team/${randomPlayer[0].team}`}>
+            {randomPlayer[0].team}
+          </Link>, #{randomPlayer[0].jumper_number})
+        </Typography>
+        <TableContainer>
+          <Table sx={{ minWidth: 400 }} size='small' style={{background: 'white'}} className='random-player-table'>
+            <TableHead>
+              <TableRow>
+                <TableCell><Refresh onClick={e => onRefresh()}></Refresh></TableCell>
+                <TableCell align='right'>Games</TableCell>
+                <TableCell align='right'>Goals</TableCell>
+                <TableCell align='right'>Av. disposals</TableCell>
+                <TableCell align='right'>Av. kicks</TableCell>
+                <TableCell align='right'>Av. handballs</TableCell>
+                <TableCell align='right'>Av. marks</TableCell>
+                <TableCell align='right'>Av. tackles</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {randomPlayer.map(x => (
+                <TableRow
+                  key={x.season}
+                  sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+                >
+                  <TableCell>{x.season}</TableCell>
+                  <TableCell align='right'>{x.games}</TableCell>
+                  <TableCell align='right'>{x.goals}</TableCell>
+                  <TableCell align='right'>{calculateAverage('disposals', x)}</TableCell>
+                  <TableCell align='right'>{calculateAverage('kicks', x)}</TableCell>
+                  <TableCell align='right'>{calculateAverage('handballs', x)}</TableCell>
+                  <TableCell align='right'>{calculateAverage('marks', x)}</TableCell>
+                  <TableCell align='right'>{calculateAverage('tackles', x)}</TableCell>
                 </TableRow>
-              </TableHead>
-              <TableBody>
-                {randomPlayer.map(x => (
-                  <TableRow
-                    key={x.season}
-                    sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
-                  >
-                    <TableCell>{x.season}</TableCell>
-                    <TableCell align='right'>{x.games}</TableCell>
-                    <TableCell align='right'>{x.goals}</TableCell>
-                    <TableCell align='right'>{calculateAverage('disposals', x)}</TableCell>
-                    <TableCell align='right'>{calculateAverage('kicks', x)}</TableCell>
-                    <TableCell align='right'>{calculateAverage('handballs', x)}</TableCell>
-                    <TableCell align='right'>{calculateAverage('marks', x)}</TableCell>
-                    <TableCell align='right'>{calculateAverage('tackles', x)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </CardContent>
-      </Card>
-    : null}
-  </div>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </CardContent>
+    </Card>
+  : null
 }
 
 const renderLadder = ladder => {
@@ -234,10 +233,11 @@ function Home() {
   }, []);
   
   const [randomPlayer, setRandomPlayer] = useState(null);
-  useEffect(() => {
+  const getRandomPlayer = () => {
     apiRequester({url: randomPlayerUrl})
-      .then(data => setRandomPlayer(data))
-  }, []);
+      .then(data => setRandomPlayer(data));
+  }
+  useEffect(getRandomPlayer, []);
 
   return (
     <div className='app'>
@@ -266,7 +266,7 @@ function Home() {
         </Grid>
         <Grid item xs={12} md={6}>
           <Grid container spacing={2}>
-            <Grid item xs={12}>{renderRandomPlayer(randomPlayer)}</Grid>
+            <Grid item xs={12}>{renderRandomPlayer(randomPlayer, getRandomPlayer)}</Grid>
             <Grid item xs={12}>{renderLadder(currentLadder)}</Grid>
           </Grid>
         </Grid>

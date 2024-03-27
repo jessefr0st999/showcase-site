@@ -58,10 +58,6 @@ a:hover {
   transition: linear 0.2s;
 }
 
-/* .match-history-card {
-  height: 382px !important;
-} */
-
 .chart-wrapper {
   height: 350px !important;
 }
@@ -84,11 +80,13 @@ tr.ladder-divider > td {
   margin: auto;
 }
 
+.random-player-table th > svg,
 .player-search-table td > svg {
   display: flex;
 }
 
 .chart-card > div > svg,
+.random-player-table th > svg,
 .player-search-table td > svg {
   cursor: pointer;
 }
