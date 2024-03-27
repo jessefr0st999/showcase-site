@@ -71,3 +71,28 @@ export const getRoundName = (season, round, short) => {
       return short ? 'GF' :'Grand Final'
   }
 }
+
+export class BaseChartOptions {
+  responsive = true;
+  maintainAspectRatio = false;
+  plugins = {
+    legend: {
+      position: 'top',
+    },
+  }
+  pointRadius = 4;
+  pointHoverRadius = 8;
+}
+
+export const chartColours = ['red', 'blue', 'gold', 'green', 'magenta', 'orange', 'cyan'];
+const visibleDatasets = ['disposals', 'marks', 'tackles', 'hitouts'];
+const hiddenDatasets = ['kicks', 'handballs', 'goals'];
+export class BaseChartData {
+  labels = [];
+  datasets = [...visibleDatasets, ...hiddenDatasets].map((x, i) => ({
+    label: x,
+    data: [],
+    backgroundColor: chartColours[i],
+    hidden: hiddenDatasets.includes(x),
+  }));
+}

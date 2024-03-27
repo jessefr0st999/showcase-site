@@ -62,7 +62,7 @@ a:hover {
   height: 382px !important;
 } */
 
-.chart-card > div {
+.chart-wrapper {
   height: 350px !important;
 }
 
@@ -78,4 +78,17 @@ tr.ladder-divider {
 tr.ladder-divider > td {
   padding: 0;
   height: 5px;
+}
+
+.chart-card > div > svg {
+  margin: auto;
+}
+
+.player-search-table td > svg {
+  display: flex;
+}
+
+.chart-card > div > svg,
+.player-search-table td > svg {
+  cursor: pointer;
 }

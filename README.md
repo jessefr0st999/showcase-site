@@ -22,7 +22,7 @@ Individual player page:
 Team page:
 ![](./screenshots/team.png)
 
-Player search page:
+Player search and comparison page:
 ![](./screenshots/players.png)
 
 All teams page:
@@ -67,7 +67,4 @@ CREATE DATABASE site_db;
 - Deploy live script
 - Loading spinners and placeholder containers
 - Minify the JS
-- Page for comparing players
-  - Stats across last 25 games (matching or non-matching)
-  - Stats across each season (matching or non-matching)
-  - Multiple players and one statistic shown on each chart
+- Extend player comparison page to compare individual games

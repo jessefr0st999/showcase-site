@@ -24,7 +24,7 @@ import {
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 
-import { apiRequester, getRoundName } from './helpers.js';
+import { apiRequester, getRoundName, BaseChartOptions, BaseChartData } from './helpers.js';
 
 ChartJS.register(
   CategoryScale,
@@ -35,27 +35,6 @@ ChartJS.register(
   Tooltip,
   Legend
 );
-const BaseChartOptions = class {
-  responsive = true;
-  maintainAspectRatio = false;
-  plugins = {
-    legend: {
-      position: 'top',
-    },
-  }
-}
-const chartColours = ['red', 'blue', 'gold', 'green', 'orange', 'cyan', 'magenta'];
-const visibleDatasets = ['disposals', 'marks', 'tackles', 'hitouts'];
-const hiddenDatasets = ['kicks', 'handballs', 'goals'];
-const BaseChartData = class {
-  labels = [];
-  datasets = [...visibleDatasets, ...hiddenDatasets].map((x, i) => ({
-    label: x,
-    data: [],
-    backgroundColor: chartColours[i],
-    hidden: hiddenDatasets.includes(x),
-  }));
-}
 const seasonChartOptions = new BaseChartOptions();
 const recentChartOptions = new BaseChartOptions();
 
@@ -162,8 +141,8 @@ function Player() {
       setSeasonStats(values[0]);
       setRecentStats(values[1].slice(0, pageSize));
       setNumMatches(JSON.parse(values[1]._headers.get('x-pagination')).total);
-      let _seasonChartData = new BaseChartData()
-      let _recentChartData = new BaseChartData()
+      const _seasonChartData = new BaseChartData();
+      const _recentChartData = new BaseChartData();
       // Label all except goals as average
       _seasonChartData.datasets.slice(0, -1).forEach(x => x.label = `av. ${x.label}`);
       _seasonChartData.datasets.unshift({
@@ -171,7 +150,7 @@ function Player() {
         data: [],
         backgroundColor: 'black',
         hidden: true,
-      })
+      });
       values[0].toReversed().forEach((x, i) => {
         _seasonChartData.labels[i] = x.season;
         _seasonChartData.datasets[0].data[i] = x.games;
@@ -182,7 +161,7 @@ function Player() {
         _seasonChartData.datasets[5].data[i] = x.kicks / x.games;
         _seasonChartData.datasets[6].data[i] = x.handballs / x.games;
         _seasonChartData.datasets[7].data[i] = x.goals;
-      })
+      });
       values[1].toReversed().forEach((x, i) => {
         _recentChartData.labels[i] = `${getRoundName(x.season, x.match.round, true)} ${x.season}`;
         _recentChartData.datasets[0].data[i] = (x.kicks + x.handballs);
@@ -192,7 +171,7 @@ function Player() {
         _recentChartData.datasets[4].data[i] = x.kicks;
         _recentChartData.datasets[5].data[i] = x.handballs;
         _recentChartData.datasets[6].data[i] = x.goals;
-      })
+      });
       setSeasonChartData(_seasonChartData);
       setRecentChartData(_recentChartData);
     });
@@ -208,7 +187,7 @@ function Player() {
               <Typography variant='h5'>
                 Stats by season
               </Typography>
-              <div>
+              <div className='chart-wrapper'>
                 <Line options={seasonChartOptions} data={seasonChartData} />
               </div>
             </Card>
@@ -218,7 +197,7 @@ function Player() {
               <Typography variant='h5'>
                 Recent stats
               </Typography>
-              <div>
+              <div className='chart-wrapper'>
                 <Line options={recentChartOptions} data={recentChartData} />
               </div>
             </Card>
