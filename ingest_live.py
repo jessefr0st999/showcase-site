@@ -8,6 +8,7 @@ import time
 import os
 import requests
 import json
+import click
 
 from api.schema import *
 from api.api import *
@@ -20,42 +21,49 @@ engine = create_engine(os.getenv('DATABASE_URI'))
 LAST_HNA_ROUND = 24
 
 class LiveScheduler:
-    def __init__(self, sleep_seconds, num_non_active_runs):
+    def __init__(self, sleep_seconds, inactive_per_hour):
         self.sleep_seconds = sleep_seconds
-        self.num_non_active_runs = num_non_active_runs
-        self.current_non_active_runs = 0
-        # self.active = False
-        # self.earliest_live_id = None
-        self.active = True
-        self.earliest_live_id = 2884
+        self.inactive_per_hour = inactive_per_hour
+        with Session(engine) as session:
+            earliest_live_id = session.query(Matches.id)\
+                .where(Matches.live == True)\
+                .order_by(Matches.id)\
+                .limit(1).one_or_none()
+        if earliest_live_id:
+            self.earliest_live_id = earliest_live_id[0]
+            self.active = True
+        else:
+            self.earliest_live_id = None
+            self.active = False
         self.match_schema = MatchesSchema()
         self.players_by_season_schema = PlayerSchema()
         self.player_stats_schema = PlayerStatsSchema()
 
     def start(self):
-        while True:
+        if self.sleep_seconds:
+            while True:
+                self.job()
+                time.sleep(self.sleep_seconds)
+        else:
             self.job()
-            time.sleep(self.sleep_seconds)
     
     def job(self):
-        # In inactive mode, only run every fifth minute and in PM AET hours
-        if self.active:
-            self.current_non_active_runs = 0
-        else:
-            print('runs', self.current_non_active_runs,
-                'hour', datetime.now(pytz.timezone('Australia/Melbourne')).hour)
-            self.current_non_active_runs += 1
-            if self.current_non_active_runs % self.num_non_active_runs != 1:
-                return
-            if datetime.now(pytz.timezone('Australia/Melbourne')).hour < 12:
-                return
-        print(f'{datetime.now()}: beginning job')
+        # In inactive mode, only run in PM AET hours and (by default) every fifth minute
         if self.active:
             self.active_job()
-        else:
-            self.inactive_job()
+            return
+        aet_now = datetime.now(pytz.timezone('Australia/Melbourne'))
+        if aet_now.hour < 12:
+            print(f'{datetime.now()}: skipping inactive job (AM AET hours)')
+            return
+        if aet_now.minute % (60 // self.inactive_per_hour):
+            print(f'{datetime.now()}: skipping inactive job (only running'
+                f' during {self.inactive_per_hour} minutes in each hour)')
+            return
+        self.inactive_job()
 
     def active_job(self):
+        print(f'{datetime.now()}: beginning active job')
         # Query the given match and the next two (no more than three matches
         # are ever concurrently active)
         possible_live_ids = range(self.earliest_live_id, self.earliest_live_id + 3)
@@ -100,7 +108,7 @@ class LiveScheduler:
                 if match_ended:
                     sql = text('REFRESH MATERIALIZED VIEW player_season_stats;')
                     session.execute(sql)
-                    if int(match_stats[0]['round']) <= LAST_HNA_ROUND:
+                    if int(match_stats['round']) <= LAST_HNA_ROUND:
                         calculate_ladder(session)
                     session.commit()
                 print(f'Values upserted for live match with ID {match_id}')
@@ -110,9 +118,9 @@ class LiveScheduler:
             self.earliest_live_id = None
             self.active = False
             print(f'No live matches found; switching to inactive mode')
-            return
 
     def inactive_job(self):
+        print(f'{datetime.now()}: beginning inactive job')
         with Session(engine) as session:
             next_match_id = session.query(Matches.id)\
                 .order_by(desc(Matches.id))\
@@ -121,7 +129,7 @@ class LiveScheduler:
             match_stats, _, player_stats, player_season_stats = \
                 get_match_data(next_match_id)
         except requests.HTTPError:
-            print(f'No match found with ID {next_match_id}; job exiting')
+            print(f'No match found with ID {next_match_id}')
             return
         with Session(engine) as session:
             # NOTE: Setting this match as live should only be done if the match
@@ -144,6 +152,13 @@ class LiveScheduler:
         self.earliest_live_id = next_match_id
         self.active = True
 
-if __name__ == '__main__':
-    schedule = LiveScheduler(sleep_seconds=60, num_non_active_runs=5)
+@click.command()
+@click.option('--sleep_seconds', default=None, type=click.INT)
+@click.option('--inactive_per_hour', default=12, type=click.INT)
+def main(sleep_seconds, inactive_per_hour):
+    # Omit sleep_seconds when running as a cron job
+    schedule = LiveScheduler(sleep_seconds, inactive_per_hour)
     schedule.start()
+
+if __name__ == '__main__':
+    main()
