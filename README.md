@@ -60,11 +60,16 @@ CREATE DATABASE site_db;
   - https://afltables.com (SSR)
   - https://finalsiren.com (SSR)
 - Fix API requests to unknown routes
-- Websocket for updating live data
-- Update Render to paid version (database expires June 23 2024) or switch deployment method
+- Consider maintaining a single websocket connection rather than closing when changing page
 - Better scrollboxes for mobile
 - Prevent site from crashing when a request fails
 - Deploy live script
 - Loading spinners and placeholder containers
 - Minify the JS
 - Extend player comparison page to compare individual games
+- Created and modified timestamps
+- Table sorting by different columns
+- Perform upsert then retrieve row and post it to websocket server (assuming latency between deployed live script and database is minimal)
+- Clean up weird time field for live games
+- Some visual effect when a live field updates
+- Condense mobile menu into hamburger

@@ -25,6 +25,8 @@ class Matches(Base):
     live = mapped_column(Boolean)
     quarter = mapped_column(String(3))
     time = mapped_column(String(10))
+
+    player_stats = relationship('PlayerStats', backref='match')
     
     @hybrid_property
     def home_score(self):

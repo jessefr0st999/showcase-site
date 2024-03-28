@@ -3,6 +3,7 @@ import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Grid from'@mui/material/Grid';
 import Card from '@mui/material/Card';
@@ -15,13 +16,58 @@ import useWebSocket, { ReadyState } from 'react-use-websocket';
 import { apiRequester, getRoundName } from './helpers.js';
 import { WEBSOCKET_URI } from './secrets.js';
 
+const getSurname = x => x.player.name.split('.').slice(-1)[0];
+
+const renderMatchInfo = match => {
+  if (!match) {
+    return null;
+  }
+  const homePlayerStats = match.player_stats.filter(x => x.player.team == match.home_team);
+  const awayPlayerStats = match.player_stats.filter(x => x.player.team == match.away_team);
+  const homeGoalkickers = homePlayerStats.filter(x => x.goals > 0)
+    .sort((a, b) => b.goals > a.goals);
+  const awayGoalkickers = awayPlayerStats.filter(x => x.goals > 0)
+    .sort((a, b) => b.goals > a.goals);
+  return <Card variant={'outlined'} style={{width: 'min(100%, 800px)', margin: 'auto'}}>
+    <CardContent>
+      <Typography gutterBottom variant='h5' component='div' className='live-marker-container'>
+        <span>
+          <Link to={`/team/${match.home_team}`}>{match.home_team}</Link>
+          {' '}{match.home_goals}-{match.home_behinds}-{match.home_score}
+          {' '}vs <Link to={`/team/${match.away_team}`}>{match.away_team}</Link>
+          {' '}{match.away_goals}-{match.away_behinds}-{match.away_score},
+          {' '}{match.location}
+          {match.live ? ` (Q${match.quarter} ${match.time})` : ''}
+        </span>
+        {match.live ? <Circle className='live-marker'></Circle> : null}
+      </Typography>
+      <Typography variant='body2' color='text.secondary'>
+        {match.location}
+      </Typography>
+      <Typography variant='body2'>
+        <b>{match.home_team} goals:</b> {homeGoalkickers
+          .map((x, i) => <span key={'goals-' + x.player_id}>
+            {x.player.name}{x.goals > 1 ? ' ' + x.goals : ''}
+            {i < homeGoalkickers.length - 1 ? ', ' : ''}
+          </span>)}
+      </Typography>
+      <Typography variant='body2'>
+        <b>{match.away_team} goals:</b> {awayGoalkickers
+          .map((x, i) => <span key={'goals-' + x.player_id}>
+            {x.player.name}{x.goals > 1 ? ' ' + x.goals : ''}
+            {i < awayGoalkickers.length - 1 ? ', ' : ''}
+          </span>)}
+      </Typography>
+    </CardContent>
+  </Card>
+}
+
 const renderPositions = playerStats => {
   if (!playerStats) {
     return null;
   }
   // Some data lacks position info
   if (!playerStats[0].position) {
-    const getSurname = x => x.player.name.split('.').slice(-1)[0];
     playerStats.sort((a, b) => getSurname(a).localeCompare(getSurname(b)));
     return <TableContainer>
         <Table size='small'>
@@ -109,63 +155,52 @@ const renderPositions = playerStats => {
   </TableContainer>
 }
 
-const renderMatchInfo = (match, homePlayerStats, awayPlayerStats) => {
-  if (!match || !homePlayerStats || !awayPlayerStats) {
-    return null;
-  }
-  const homeGoalkickers = homePlayerStats.filter(x => x.goals > 0)
-    .sort((a, b) => b.goals > a.goals);
-  const awayGoalkickers = awayPlayerStats.filter(x => x.goals > 0)
-    .sort((a, b) => b.goals > a.goals);
-  return <Card variant={'outlined'}>
-    <CardContent>
-      <Typography gutterBottom variant='h5' component='div' className='live-marker-container'>
-        <span>
-          <Link to={`/team/${match.home_team}`}>{match.home_team}</Link>
-          {' '}{match.home_goals}-{match.home_behinds}-{match.home_score}
-          {' '}vs <Link to={`/team/${match.away_team}`}>{match.away_team}</Link>
-          {' '}{match.away_goals}-{match.away_behinds}-{match.away_score}
-          {match.live ? ` (Q${match.quarter} ${match.time})` : ''}
-        </span>
-        {match.live ? <Circle className='live-marker'></Circle> : null}
-      </Typography>
-      <Typography variant='body2' color='text.secondary'>
-        {match.location}
-      </Typography>
-      <Typography variant='body2'>
-        <b>{match.home_team} goals:</b> {homeGoalkickers
-          .map((x, i) => <span key={'goals-' + x.player_id}>
-            {x.player.name}{x.goals > 1 ? ' ' + x.goals : ''}
-            {i < homeGoalkickers.length - 1 ? ', ' : ''}
-          </span>)}
-      </Typography>
-      <Typography variant='body2'>
-        <b>{match.away_team} goals:</b> {awayGoalkickers
-          .map((x, i) => <span key={'goals-' + x.player_id}>
-            {x.player.name}{x.goals > 1 ? ' ' + x.goals : ''}
-            {i < awayGoalkickers.length - 1 ? ', ' : ''}
-          </span>)}
-      </Typography>
-    </CardContent>
-  </Card>
+const renderPlayerStats = playerStats => {
+  playerStats.sort((a, b) => a.player.jumper_number > b.player.jumper_number);
+  return playerStats ? <TableContainer>
+    <Table size='small'>
+      <TableHead>
+        <TableRow>
+          <TableCell>Player</TableCell>
+          <TableCell align='right'>Score</TableCell>
+          <TableCell align='right'>Disposals</TableCell>
+          <TableCell align='right'>Kicks</TableCell>
+          <TableCell align='right'>Handballs</TableCell>
+          <TableCell align='right'>Marks</TableCell>
+          <TableCell align='right'>Tackles</TableCell>
+          <TableCell align='right'>Hitouts</TableCell>
+          <TableCell align='right'>Frees (F/A)</TableCell>
+        </TableRow>
+      </TableHead>
+      <TableBody>
+        {playerStats.map(x => <TableRow
+            key={'stats-' + x.player.id}
+            sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+          >
+            <TableCell>#{x.player.jumper_number}{' '}
+              <Link to={`/player/${x.player.id}`}>{x.player.name}</Link></TableCell>
+            <TableCell align='right'>{x.goals}.{x.behinds}</TableCell>
+            <TableCell align='right'>{x.kicks + x.handballs}</TableCell>
+            <TableCell align='right'>{x.kicks}</TableCell>
+            <TableCell align='right'>{x.handballs}</TableCell>
+            <TableCell align='right'>{x.marks}</TableCell>
+            <TableCell align='right'>{x.tackles}</TableCell>
+            <TableCell align='right'>{x.hitouts}</TableCell>
+            <TableCell align='right'>{x.frees_for}/{x.frees_against}</TableCell>
+          </TableRow>
+        )}
+      </TableBody>
+    </Table>
+  </TableContainer> : null;
 }
 
 function Match() {
   const { matchId } = useParams();
   const matchUrl = `/api/match/${matchId}`;
-  const statsByMatchUrl = `/api/stats_by_match/${matchId}`;
   const [match, setMatch] = useState(null);
-  const [homePlayerStats, setHomePlayerStats] = useState(null);
-  const [awayPlayerStats, setAwayPlayerStats] = useState(null);
   useEffect(() => {
-    const matchDataPromise = apiRequester({url: matchUrl});
-    const statsDataPromise = apiRequester({url: statsByMatchUrl});
-    Promise.all([matchDataPromise, statsDataPromise]).then(values => {
-      const _match = values[0];
-      setMatch(_match);
-      setHomePlayerStats(values[1].filter(x => x.player.team == _match.home_team));
-      setAwayPlayerStats(values[1].filter(x => x.player.team == _match.away_team));
-    });
+    apiRequester({url: matchUrl})
+      .then(data => setMatch(data))
   }, []);
 
   const { sendJsonMessage, lastJsonMessage, readyState } = useWebSocket(
@@ -192,7 +227,7 @@ function Match() {
       {match ? <>
         <h1>{getRoundName(match.season, match.round, false)}{' '}{match.season}</h1>
         <Grid container spacing={2}>  
-          <Grid item xs={12} md={12}>{renderMatchInfo(match, homePlayerStats, awayPlayerStats)}</Grid>
+          <Grid item xs={12} md={12}>{renderMatchInfo(match)}</Grid>
           <Grid item container xs={12} md={12} spacing={2}>
             <Grid item xs={12} md={6}>
               <Card variant={'outlined'}>
@@ -200,7 +235,7 @@ function Match() {
                   <Typography variant='h5' component='div'>
                     <Link to={`/team/${match.home_team}`}>{match.home_team}</Link> (home)
                   </Typography>
-                  {renderPositions(homePlayerStats)}
+                  {renderPositions(match.player_stats.filter(x => x.player.team == match.home_team))}
                 </CardContent>
               </Card>
             </Grid>
@@ -210,7 +245,27 @@ function Match() {
                   <Typography variant='h5' component='div'>
                     <Link to={`/team/${match.away_team}`}>{match.away_team}</Link> (away)
                   </Typography>
-                  {renderPositions(awayPlayerStats)}
+                  {renderPositions(match.player_stats.filter(x => x.player.team == match.away_team))}
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Card variant={'outlined'}>
+                <CardContent>
+                  <Typography variant='h5' component='div'>
+                    <Link to={`/team/${match.home_team}`}>{match.home_team}</Link> (home)
+                  </Typography>
+                  {renderPlayerStats(match.player_stats.filter(x => x.player.team == match.home_team))}
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Card variant={'outlined'}>
+                <CardContent>
+                  <Typography variant='h5' component='div'>
+                    <Link to={`/team/${match.away_team}`}>{match.away_team}</Link> (away)
+                  </Typography>
+                  {renderPlayerStats(match.player_stats.filter(x => x.player.team == match.away_team))}
                 </CardContent>
               </Card>
             </Grid>

@@ -3,7 +3,7 @@ from sqlalchemy import desc, text, or_, and_
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.expression import func
 from marshmallow import Schema
-from marshmallow.fields import Nested, Float as MFloat, Integer as MInteger, List
+from marshmallow.fields import Nested, List, Float as MFloat, Integer as MInteger
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from urllib.parse import unquote
 
@@ -41,14 +41,6 @@ class PlayerSeasonStatsSchema(PlayerSchema):
     frees_for = MInteger()
     frees_against = MInteger()
 
-class MatchesSchema(SQLAlchemyAutoSchema):
-    class Meta:
-        model = Matches
-        include_fk = True
-        load_instance = True
-    home_score = MInteger()
-    away_score = MInteger()
-
     # Allows calculation of hybrid properties before database insertion
     def dump_auto_calc(self, dict):
         new_dict = {
@@ -63,12 +55,21 @@ class PlayerStatsSchema(SQLAlchemyAutoSchema):
         model = PlayerStats
         include_fk = True
         load_instance = True
+    player = Nested(PlayerSchema)
+
+class MatchesSchema(SQLAlchemyAutoSchema):
+    class Meta:
+        model = Matches
+        include_fk = True
+        load_instance = True
+    home_score = MInteger()
+    away_score = MInteger()
+
+class MatchesWithPlayerStatsSchema(MatchesSchema):
+    player_stats = List(Nested(PlayerStatsSchema))
 
 class PlayerStatsWithMatchSchema(PlayerStatsSchema):
     match = Nested(MatchesSchema)
-
-class PlayerStatsWithPlayerSchema(PlayerStatsSchema):
-    player = Nested(PlayerSchema)
 
 class LadderSchema(SQLAlchemyAutoSchema):
     class Meta:
@@ -78,16 +79,13 @@ class LadderSchema(SQLAlchemyAutoSchema):
     percent = MFloat()
     ladder_points = MInteger()
 
-class NumMatchesSchema(Schema):
-    num_matches = MInteger()
-
 class DataSpanSchema(Schema):
     season = MInteger()
     min_round = MInteger()
     max_round = MInteger()
 
 @api_bp.route('/match/<match_id>')
-@api_bp.response(200, MatchesSchema)
+@api_bp.response(200, MatchesWithPlayerStatsSchema)
 def match(match_id):
     with Session(engine) as session:
         try:
@@ -96,7 +94,7 @@ def match(match_id):
                 .one()
         except Exception:
             abort(404)
-        return MatchesSchema().dump(result)
+        return MatchesWithPlayerStatsSchema().dump(result)
 
 @api_bp.route('/player/<player_id>')
 @api_bp.response(200, PlayerSeasonStatsSchema(many=True))
@@ -240,35 +238,14 @@ def stats_by_player(player_id, pagination_parameters):
     limit, offset = pp_to_limit_offset(pagination_parameters)
     with Session(engine) as session:
         try:
-            query = session.query(PlayerStats, Matches)\
+            query = session.query(PlayerStats)\
                 .where(PlayerStats.player_id == player_id)\
-                .join(Matches, Matches.id == PlayerStats.match_id)\
                 .order_by(desc(PlayerStats.match_id))
             pagination_parameters.item_count = query.count()
             results = query.limit(limit).offset(offset).all()
         except Exception:
             abort(404)
-        matches_schema = MatchesSchema()
-        stats_schema = PlayerStatsWithMatchSchema()
-        full_results = []
-        for r in results:
-            new_result = stats_schema.dump(r[0])
-            new_result['match'] = matches_schema.dump(r[1])
-            full_results.append(new_result)
-        return full_results
-
-@api_bp.route('/stats_by_match/<match_id>')
-@api_bp.response(200, PlayerStatsWithPlayerSchema(many=True))
-def stats_by_match(match_id):
-    with Session(engine) as session:
-        try:
-            results = session.query(PlayerStats)\
-                .where(PlayerStats.match_id == match_id)\
-                .order_by(desc(PlayerStats.match_id))\
-                .all()
-        except Exception:
-            abort(404)
-        schema = PlayerStatsWithPlayerSchema()
+        schema = PlayerStatsWithMatchSchema()
         return [schema.dump(x) for x in results]
 
 @api_bp.route('/current_ladder')
