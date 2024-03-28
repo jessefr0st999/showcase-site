@@ -7,8 +7,10 @@ import pytz
 import time
 import os
 import requests
+import json
 
 from api.schema import *
+from api.api import *
 from ingest_historical import get_match_data, calculate_ladder
 
 load_dotenv()
@@ -22,9 +24,13 @@ class LiveScheduler:
         self.sleep_seconds = sleep_seconds
         self.num_non_active_runs = num_non_active_runs
         self.current_non_active_runs = 0
-        self.active = False
-        self.earliest_live_id = None
-        self.earliest_live_q4_time = None
+        # self.active = False
+        # self.earliest_live_id = None
+        self.active = True
+        self.earliest_live_id = 2884
+        self.match_schema = MatchesSchema()
+        self.players_by_season_schema = PlayerSchema()
+        self.player_stats_schema = PlayerStatsSchema()
 
     def start(self):
         while True:
@@ -36,6 +42,8 @@ class LiveScheduler:
         if self.active:
             self.current_non_active_runs = 0
         else:
+            print('runs', self.current_non_active_runs,
+                'hour', datetime.now(pytz.timezone('Australia/Melbourne')).hour)
             self.current_non_active_runs += 1
             if self.current_non_active_runs % self.num_non_active_runs != 1:
                 return
@@ -53,33 +61,49 @@ class LiveScheduler:
         possible_live_ids = range(self.earliest_live_id, self.earliest_live_id + 3)
         match_ended = False
         no_live_matches = True
-        match_stats = []
-        player_stats = []
-        player_season_stats = []
         for match_id in possible_live_ids:
             try:
-                _match_stats, _match_time_stats, _player_stats, _player_season_stats = \
+                match_stats, player_stats, player_season_stats = \
                     get_match_data(match_id)
                 print(f'Match with ID {match_id} found')
             except requests.HTTPError:
                 print(f'No match found with ID {match_id}')
                 continue
-            # If the time in the 4th quarter is the same as the last request,
-            # consider the match complete and mark the next match as the current
-            # earliest match
+            # If percent complete has reach 100, mark the next match as the
+            # current earliest match
             no_live_matches = False
-            _match_stats['live'] = True
-            if match_id == self.earliest_live_id and _match_time_stats['quarter'] == '4':
-                if self.earliest_live_q4_time == _match_time_stats['time']:
-                    match_ended = True
-                    _match_stats['live'] = False
-                    self.earliest_live_id += 1
-                    self.earliest_live_q4_time = None
-                else:
-                    self.earliest_live_q4_time = _match_time_stats['time']
-            match_stats.append(_match_stats)
-            player_stats.extend(_player_stats)
-            player_season_stats.extend(_player_season_stats)
+            match_stats['live'] = True
+            percent_complete = match_stats.pop('percent_complete')
+            if match_id == self.earliest_live_id and percent_complete == '100':
+                match_ended = True
+                match_stats['live'] = False
+                self.earliest_live_id += 1
+            with Session(engine) as session:
+                # Notify websocket server of update to each current match
+                requests.post('http://' + os.getenv('WEBSOCKET_HOST'),
+                    data=json.dumps(self.match_schema.dump_auto_calc(match_stats)))
+                query = insert(Matches).values(match_stats)
+                query = query.on_conflict_do_update(constraint='matches_pkey',
+                    set_={col: getattr(query.excluded, col) for col in match_stats})
+                session.execute(query)
+                query = insert(PlayersBySeason).values(player_season_stats)\
+                    .on_conflict_do_nothing()
+                session.execute(query)
+                session.commit()
+                query = insert(PlayerStats).values(player_stats)
+                query = query.on_conflict_do_update(constraint='player_stats_pkey',
+                    set_={col: getattr(query.excluded, col) for col in player_stats[0]})
+                session.execute(query)
+                session.commit()
+                # Only update ladder and season averages when a match ends and only
+                # update ladder during the home and away season
+                if match_ended:
+                    sql = text('REFRESH MATERIALIZED VIEW player_season_stats;')
+                    session.execute(sql)
+                    if int(match_stats[0]['round']) <= LAST_HNA_ROUND:
+                        calculate_ladder(session)
+                    session.commit()
+                print(f'Values upserted for live match with ID {match_id}')
         # If none of the previously live matches are active any more, return to
         # inactive mode
         if no_live_matches:
@@ -87,32 +111,6 @@ class LiveScheduler:
             self.active = False
             print(f'No live matches found; switching to inactive mode')
             return
-        with Session(engine) as session:
-            print([x['home_goals'] for x in match_stats])
-            for x in match_stats:
-                query = insert(Matches).values(match_stats)
-                query = query.on_conflict_do_update(constraint='matches_pkey',
-                    set_={col: getattr(query.excluded, col) for col in x})
-                session.execute(query)
-            query = insert(PlayersBySeason).values(player_season_stats)\
-                .on_conflict_do_nothing()
-            session.execute(query)
-            session.commit()
-            for x in player_stats:
-                query = insert(PlayerStats).values(player_stats)
-                query = query.on_conflict_do_update(constraint='player_stats_pkey',
-                    set_={col: getattr(query.excluded, col) for col in x})
-                session.execute(query)
-            session.commit()
-            # Only update ladder and season averages when a match ends and only
-            # update ladder during the home and away season
-            if match_ended:
-                sql = text('REFRESH MATERIALIZED VIEW player_season_stats;')
-                session.execute(sql)
-                if int(match_stats[0]['round']) <= LAST_HNA_ROUND:
-                    calculate_ladder(session)
-                session.commit()
-            print(f'Values upserted for found live matches')
 
     def inactive_job(self):
         with Session(engine) as session:
@@ -129,7 +127,11 @@ class LiveScheduler:
             # NOTE: Setting this match as live should only be done if the match
             # is actually live; a historical backfill should always be done
             # before running this live script
-            query = insert(Matches).values({'live': True, **match_stats})
+            match_stats['live'] = True
+            # Notify websocket server of new match
+            requests.post('http://' + os.getenv('WEBSOCKET_HOST'),
+                data=json.dumps(self.match_schema.dump_auto_calc(match_stats)))
+            query = insert(Matches).values(match_stats)
             session.execute(query)
             query = insert(PlayersBySeason).values(player_season_stats)\
                 .on_conflict_do_nothing()
@@ -143,6 +145,5 @@ class LiveScheduler:
         self.active = True
 
 if __name__ == '__main__':
-    # schedule = LiveScheduler(sleep_seconds=60, num_non_active_runs=5)
-    schedule = LiveScheduler(sleep_seconds=10, num_non_active_runs=5)
+    schedule = LiveScheduler(sleep_seconds=60, num_non_active_runs=5)
     schedule.start()

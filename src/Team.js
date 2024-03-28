@@ -13,8 +13,10 @@ import Pagination from '@mui/material/Pagination';
 import Stack from '@mui/material/Stack';
 import { Circle } from '@mui/icons-material';
 import { useParams, Link } from 'react-router-dom';
+import useWebSocket, { ReadyState } from 'react-use-websocket';
 
 import { apiRequester, getRoundName } from './helpers.js';
+import { WEBSOCKET_URI } from './secrets.js';
 
 function Matches({matches, page, count, onPaginationChange}) {
   return <>
@@ -23,10 +25,13 @@ function Matches({matches, page, count, onPaginationChange}) {
         <Card variant={'outlined'}>
           <CardContent>
             <Typography gutterBottom variant='h5' component='div' className='live-marker-container'>
-              <Link to={`/match/${match.id}`}>
-                {`${match.home_team} ${match.home_goals}-${match.home_behinds}-${match.home_score}
-                vs ${match.away_team} ${match.away_goals}-${match.away_behinds}-${match.away_score}`}
-              </Link>
+              <span>
+                <Link to={`/match/${match.id}`}>
+                  {`${match.home_team} ${match.home_goals}-${match.home_behinds}-${match.home_score}
+                    vs ${match.away_team} ${match.away_goals}-${match.away_behinds}-${match.away_score}`}
+                </Link>
+                {match.live ? ` (Q${match.quarter} ${match.time})` : ''}
+              </span>
               {match.live ? <Circle className='live-marker'></Circle> : ''}
             </Typography>
             <Typography variant='body2' color='text.secondary'>
@@ -100,6 +105,29 @@ function Team() {
     apiRequester({url: playersUrl})
       .then(data => setPlayers(data))
   }, []);
+
+  const { sendJsonMessage, lastJsonMessage, readyState } = useWebSocket(
+    WEBSOCKET_URI, {share: false, shouldReconnect: () => true})
+
+  useEffect(() => {
+    if (readyState === ReadyState.OPEN) {
+      sendJsonMessage({event: 'subscribe'})
+    }
+  }, [readyState]);
+
+  useEffect(() => {
+    if (!lastJsonMessage) {
+      return;
+    }
+    const indexToUpdate = matches.findIndex(x => x.id === lastJsonMessage.id);
+    if (indexToUpdate === -1) {
+      // Update an existing match
+      const newMatches = [...matches];
+      newMatches[indexToUpdate] = lastJsonMessage;
+      setMatches(newMatches);
+    }
+  }, [lastJsonMessage]);
+
   return (
     <div className='app' style={{flexDirection: 'column'}}>
       <h1>{teamName}</h1>

@@ -16,8 +16,10 @@ import MenuItem from '@mui/material/MenuItem';
 import Tooltip from '@mui/material/Tooltip';
 import { Refresh, Circle } from '@mui/icons-material';
 import { Link, useSearchParams } from 'react-router-dom';
+import useWebSocket, { ReadyState } from 'react-use-websocket';
 
 import { apiRequester, calculateAverage, getRoundName } from './helpers.js';
+import { WEBSOCKET_URI } from './secrets.js';
 
 const currentMatchesUrl = '/api/current_matches';
 const matchesBaseUrl = '/api/matches_by_round';
@@ -65,10 +67,13 @@ function Matches({matches, seasonList, roundList, season, round, onSeasonChange,
         <Card variant={'outlined'}>
           <CardContent>
             <Typography gutterBottom variant='h5' component='div' className='live-marker-container'>
-              <Link to={`/match/${match.id}`}>
-                {`${match.home_team} ${match.home_goals}-${match.home_behinds}-${match.home_score}
-                  vs ${match.away_team} ${match.away_goals}-${match.away_behinds}-${match.away_score}`}
-              </Link>
+              <span>
+                <Link to={`/match/${match.id}`}>
+                  {`${match.home_team} ${match.home_goals}-${match.home_behinds}-${match.home_score}
+                    vs ${match.away_team} ${match.away_goals}-${match.away_behinds}-${match.away_score}`}
+                </Link>
+                {match.live ? ` (Q${match.quarter} ${match.time})` : ''}
+              </span>
               {match.live ? <Circle className='live-marker'></Circle> : ''}
             </Typography>
             <Typography variant='body2' color='text.secondary'>
@@ -193,7 +198,7 @@ function Home() {
   // Default to current round if URL params not specified, and update the
   // season and round states if so
   const submitSearch = (season, round) => {
-    const url = season && (round || round === 0)
+    const url = Number(season) && (Number(round) || Number(round) === 0)
       ? `${matchesBaseUrl}/${season}/${round}`
       : currentMatchesUrl;
     apiRequester({url: url}).then(data => {
@@ -222,7 +227,7 @@ function Home() {
   useEffect(() => {
     apiRequester({url: dataSpanUrl})
       .then(data => {
-        const seasonInfo = searchParams.get('season')
+        const seasonInfo = Number(searchParams.get('season'))
           ? data.find(x => x.season == searchParams.get('season'))
           : data.slice(-1)[0];
         const {min_round, max_round} = seasonInfo;
@@ -244,6 +249,35 @@ function Home() {
       .then(data => setRandomPlayer(data));
   }
   useEffect(getRandomPlayer, []);
+
+  const { sendJsonMessage, lastJsonMessage, readyState } = useWebSocket(
+    WEBSOCKET_URI, {share: false, shouldReconnect: () => true})
+
+  // Run when the connection state (readyState) changes
+  // TODO: add retry count
+  useEffect(() => {
+    if (readyState === ReadyState.OPEN) {
+      sendJsonMessage({event: 'subscribe'})
+    }
+  }, [readyState]);
+
+  // Run when a new WebSocket message is received
+  useEffect(() => {
+    if (!lastJsonMessage) {
+      return;
+    }
+    const indexToUpdate = matches.findIndex(x => x.id === lastJsonMessage.id);
+    if (indexToUpdate !== -1) {
+      // Update an existing match
+      const newMatches = [...matches];
+      newMatches[indexToUpdate] = lastJsonMessage;
+      setMatches(newMatches);
+    } else if (lastJsonMessage.season === season &&
+        lastJsonMessage.round === round) {
+      // Render a new match in the same round
+      setMatches([lastJsonMessage, ...matches]);
+    }
+  }, [lastJsonMessage]);
 
   return (
     <div className='app'>

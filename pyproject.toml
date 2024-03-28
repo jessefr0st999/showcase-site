@@ -15,4 +15,5 @@ dependencies = [
     "lxml==5.1.0",
     "marshmallow_sqlalchemy==1.0.0",
     "gunicorn==21.2.0",
+    "tornado==6.4",
 ]

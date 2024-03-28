@@ -36,10 +36,9 @@ MATCH_PROPERTIES_MAP = {
     'HomeTeamBehind': 'home_behinds',
     'AwayTeamGoal': 'away_goals',
     'AwayTeamBehind': 'away_behinds',
-}
-MATCH_TIME_PROPERTIES_MAP = {
     'CurrentQuarter': 'quarter',
     'CurrentTime': 'time',
+    'PercComplete': 'percent_complete',
 }
 PLAYER_PROPERTIES_MAP = {
     'PlayerID': 'player_id',
@@ -62,7 +61,6 @@ def get_match_data(match_number):
     root = ElementTree.fromstring(response.text.encode('utf-8'),
         parser=XMLParser(encoding='utf-8', recover=True))
     match_stats = {'id': match_number}
-    match_time_stats = {'id': match_number}
     player_stats = []
     player_season_stats = []
     for child in root:
@@ -75,10 +73,6 @@ def get_match_data(match_number):
                     if (key == 'home_team' or key == 'away_team') and \
                             property.text == 'GWS Giants':
                         match_stats[key] = 'Greater Western Sydney'
-                if property.tag in MATCH_TIME_PROPERTIES_MAP:
-                    key = MATCH_TIME_PROPERTIES_MAP[property.tag]
-                    match_time_stats[key] = property.text
-                        
         elif child.tag in ['Home', 'Away']:
             for player in child:
                 _player_stats = {
@@ -110,7 +104,7 @@ def get_match_data(match_number):
                         if child.tag == 'Home' else match_stats['away_team']
                 player_stats.append(_player_stats)
                 player_season_stats.append(_player_season_stats)
-    return match_stats, match_time_stats, player_stats, player_season_stats
+    return match_stats, player_stats, player_season_stats
 
 def calculate_ladder(session, season=None, latest_round=True):
     # Default to latest season and round

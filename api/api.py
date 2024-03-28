@@ -49,19 +49,25 @@ class MatchesSchema(SQLAlchemyAutoSchema):
     home_score = MInteger()
     away_score = MInteger()
 
-class PlayerStatsWithMatchSchema(SQLAlchemyAutoSchema):
+    # Allows calculation of hybrid properties before database insertion
+    def dump_auto_calc(self, dict):
+        new_dict = {
+            'home_score': 6 * int(dict['home_goals']) + int(dict['home_behinds']),
+            'away_score': 6 * int(dict['away_goals']) + int(dict['away_behinds']),
+            **dict,
+        }
+        return super().dump(new_dict)
+
+class PlayerStatsSchema(SQLAlchemyAutoSchema):
     class Meta:
         model = PlayerStats
         include_fk = True
         load_instance = True
+
+class PlayerStatsWithMatchSchema(PlayerStatsSchema):
     match = Nested(MatchesSchema)
 
-class PlayerStatsWithPlayerSchema(SQLAlchemyAutoSchema):
-    class Meta:
-        model = PlayerStats
-        include_fk = True
-        load_instance = True
-        load_relationships = True
+class PlayerStatsWithPlayerSchema(PlayerStatsSchema):
     player = Nested(PlayerSchema)
 
 class LadderSchema(SQLAlchemyAutoSchema):

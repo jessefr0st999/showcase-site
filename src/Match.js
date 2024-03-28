@@ -10,8 +10,10 @@ import CardContent from '@mui/material/CardContent';
 import Typography from '@mui/material/Typography';
 import { Circle } from '@mui/icons-material';
 import { useParams, Link } from 'react-router-dom';
+import useWebSocket, { ReadyState } from 'react-use-websocket';
 
 import { apiRequester, getRoundName } from './helpers.js';
+import { WEBSOCKET_URI } from './secrets.js';
 
 const renderPositions = playerStats => {
   if (!playerStats) {
@@ -123,6 +125,7 @@ const renderMatchInfo = (match, homePlayerStats, awayPlayerStats) => {
           {' '}{match.home_goals}-{match.home_behinds}-{match.home_score}
           {' '}vs <Link to={`/team/${match.away_team}`}>{match.away_team}</Link>
           {' '}{match.away_goals}-{match.away_behinds}-{match.away_score}
+          {match.live ? ` (Q${match.quarter} ${match.time})` : ''}
         </span>
         {match.live ? <Circle className='live-marker'></Circle> : null}
       </Typography>
@@ -164,6 +167,25 @@ function Match() {
       setAwayPlayerStats(values[1].filter(x => x.player.team == _match.away_team));
     });
   }, []);
+
+  const { sendJsonMessage, lastJsonMessage, readyState } = useWebSocket(
+    WEBSOCKET_URI, {share: false, shouldReconnect: () => true})
+
+  useEffect(() => {
+    if (readyState === ReadyState.OPEN) {
+      sendJsonMessage({event: 'subscribe'})
+    }
+  }, [readyState]);
+
+  useEffect(() => {
+    if (!lastJsonMessage) {
+      return;
+    }
+    if (match && match.id == lastJsonMessage.id) {
+      // Update the current match
+      setMatch(lastJsonMessage);
+    }
+  }, [lastJsonMessage]);
 
   return (
     <div className='app' style={{flexDirection: 'column'}}>

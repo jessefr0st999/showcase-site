@@ -1,0 +1,1 @@
+export const WEBSOCKET_URI = 'ws://localhost:7000/ws';
