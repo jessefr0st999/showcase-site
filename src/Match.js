@@ -35,8 +35,7 @@ const renderMatchInfo = match => {
           <Link to={`/team/${match.home_team}`}>{match.home_team}</Link>
           {' '}{match.home_goals}-{match.home_behinds}-{match.home_score}
           {' '}vs <Link to={`/team/${match.away_team}`}>{match.away_team}</Link>
-          {' '}{match.away_goals}-{match.away_behinds}-{match.away_score},
-          {' '}{match.location}
+          {' '}{match.away_goals}-{match.away_behinds}-{match.away_score}
           {match.live ? ` (Q${match.quarter} ${match.time})` : ''}
         </span>
         {match.live ? <Circle className='live-marker'></Circle> : null}

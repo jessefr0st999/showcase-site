@@ -69,7 +69,8 @@ CREATE DATABASE site_db;
 - Extend player comparison page to compare individual games
 - Created and modified timestamps
 - Table sorting by different columns
-- Perform upsert then retrieve row and post it to websocket server (assuming latency between deployed live script and database is minimal)
 - Clean up weird time field for live games
 - Some visual effect when a live field updates
 - Condense mobile menu into hamburger
+- Test whether new matches in the same round render as expected on the home page
+- Test whether latency between deployed live service and database is minimal (critical for performance of retrieving row and post it to websocket server after upsert)

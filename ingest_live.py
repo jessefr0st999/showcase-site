@@ -16,6 +16,7 @@ from ingest_historical import get_match_data, calculate_ladder
 
 load_dotenv()
 engine = create_engine(os.getenv('DATABASE_URI'))
+WEBSOCKET_URI = 'http://' + os.getenv('WEBSOCKET_HOST')
 # TODO: Update this if running for during season with a different final home
 # and away round
 LAST_HNA_ROUND = 24
@@ -35,7 +36,7 @@ class LiveScheduler:
         else:
             self.earliest_live_id = None
             self.active = False
-        self.match_schema = MatchesSchema()
+        self.match_schema = MatchesWithPlayerStatsSchema()
         self.players_by_season_schema = PlayerSchema()
         self.player_stats_schema = PlayerStatsSchema()
 
@@ -87,9 +88,6 @@ class LiveScheduler:
                 match_stats['live'] = False
                 self.earliest_live_id += 1
             with Session(engine) as session:
-                # Notify websocket server of update to each current match
-                requests.post('http://' + os.getenv('WEBSOCKET_HOST'),
-                    data=json.dumps(self.match_schema.dump_auto_calc(match_stats)))
                 query = insert(Matches).values(match_stats)
                 query = query.on_conflict_do_update(constraint='matches_pkey',
                     set_={col: getattr(query.excluded, col) for col in match_stats})
@@ -103,6 +101,11 @@ class LiveScheduler:
                     set_={col: getattr(query.excluded, col) for col in player_stats[0]})
                 session.execute(query)
                 session.commit()
+                # Notify websocket server of update to each current match
+                new_match_stats = session.query(Matches)\
+                    .where(Matches.id == match_id).one()
+                requests.post(WEBSOCKET_URI,
+                    data=json.dumps(self.match_schema.dump(new_match_stats)))
                 # Only update ladder and season averages when a match ends and only
                 # update ladder during the home and away season
                 if match_ended:
@@ -126,7 +129,7 @@ class LiveScheduler:
                 .order_by(desc(Matches.id))\
                 .limit(1).one()[0] + 1
         try:
-            match_stats, _, player_stats, player_season_stats = \
+            match_stats, player_stats, player_season_stats = \
                 get_match_data(next_match_id)
         except requests.HTTPError:
             print(f'No match found with ID {next_match_id}')
@@ -136,9 +139,7 @@ class LiveScheduler:
             # is actually live; a historical backfill should always be done
             # before running this live script
             match_stats['live'] = True
-            # Notify websocket server of new match
-            requests.post('http://' + os.getenv('WEBSOCKET_HOST'),
-                data=json.dumps(self.match_schema.dump_auto_calc(match_stats)))
+            del match_stats['percent_complete']
             query = insert(Matches).values(match_stats)
             session.execute(query)
             query = insert(PlayersBySeason).values(player_season_stats)\
@@ -148,6 +149,11 @@ class LiveScheduler:
             query = insert(PlayerStats).values(player_stats)
             session.execute(query)
             session.commit()
+            # Notify websocket server of new match
+            new_match_stats = session.query(Matches)\
+                .where(Matches.id == next_match_id).one()
+            requests.post(WEBSOCKET_URI,
+                data=json.dumps(self.match_schema.dump(new_match_stats)))
         print(f'Match with ID {next_match_id} found and values upserted; switching to active mode')
         self.earliest_live_id = next_match_id
         self.active = True
