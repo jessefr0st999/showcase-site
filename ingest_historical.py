@@ -178,9 +178,10 @@ if __name__ == '__main__':
         player_season_stats = []
         while match_id <= end_id:
             try:
-                _match_stats, _, _player_stats, _player_season_stats = \
+                _match_stats, _player_stats, _player_season_stats = \
                     get_match_data(match_id)
                 _match_stats['live'] = False
+                del _match_stats['percent_complete']
                 if match_id % 10 == 0:
                     print(f'{season}: Data for match with ID {match_id} obtained'
                         f' ({match_id - start_id} / {end_id - start_id})')

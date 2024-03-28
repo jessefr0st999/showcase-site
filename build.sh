@@ -1,4 +1,4 @@
 pip install .
 npm install
-sed -i 's@localhost:7000@'"$WEBSOCKET_HOST"'@' src/secrets.js
+sed -i 's@ws://localhost:7000@wss://'"$WEBSOCKET_HOST"'@' src/secrets.js
 npm run build

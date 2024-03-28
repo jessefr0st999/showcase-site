@@ -21,7 +21,7 @@ class SocketHandler(WebSocketHandler):
     def initialize(self):
         pass
     
-    async def open(self):
+    def open(self):
         CLIENTS.add(self)
         self.write_message('connected')
         print('open')
