@@ -16,7 +16,7 @@ import { useParams, Link } from 'react-router-dom';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 import { visuallyHidden } from '@mui/utils';
 
-import { apiRequester, getRoundName, formatMatchTime } from './helpers.js';
+import { apiRequester, getRoundName, formatLiveText } from './helpers.js';
 import { WEBSOCKET_URI } from './secrets.js';
 
 const renderMatchInfo = match => {
@@ -29,6 +29,7 @@ const renderMatchInfo = match => {
     .sort((a, b) => b.goals > a.goals);
   const awayGoalkickers = awayPlayerStats.filter(x => x.goals > 0)
     .sort((a, b) => b.goals > a.goals);
+  const liveText = formatLiveText(match);
   return <Card variant={'outlined'} style={{width: 'min(100%, 800px)', margin: 'auto'}}>
     <CardContent>
       <Typography gutterBottom variant='h5' component='div' className='live-marker-container'>
@@ -37,7 +38,7 @@ const renderMatchInfo = match => {
           {' '}{match.home_goals}-{match.home_behinds}-{match.home_score}
           {' '}vs <Link to={`/team/${match.away_team}`}>{match.away_team}</Link>
           {' '}{match.away_goals}-{match.away_behinds}-{match.away_score}
-          {match.live ? ` (Q${match.quarter} ${formatMatchTime(match.time)})` : ''}
+          {match.live ? liveText : ''}
         </span>
         {match.live ? <Circle className='live-marker'></Circle> : null}
       </Typography>

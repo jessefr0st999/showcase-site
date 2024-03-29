@@ -36,7 +36,6 @@ MATCH_PROPERTIES_MAP = {
     'HomeTeamBehind': 'home_behinds',
     'AwayTeamGoal': 'away_goals',
     'AwayTeamBehind': 'away_behinds',
-    'CurrentQuarter': 'quarter',
     'CurrentTime': 'time',
     'PercComplete': 'percent_complete',
 }
@@ -180,8 +179,10 @@ if __name__ == '__main__':
             try:
                 _match_stats, _player_stats, _player_season_stats = \
                     get_match_data(match_id)
-                _match_stats['live'] = False
-                del _match_stats['percent_complete']
+                if int(_match_stats['percent_complete']) == 100:
+                    _match_stats['live'] = False
+                else:
+                    _match_stats['live'] = True
                 if match_id % 10 == 0:
                     print(f'{season}: Data for match with ID {match_id} obtained'
                         f' ({match_id - start_id} / {end_id - start_id})')

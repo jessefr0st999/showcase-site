@@ -77,12 +77,12 @@ class LiveScheduler:
             except requests.HTTPError:
                 print(f'No match found with ID {match_id}')
                 continue
-            # If percent complete has reach 100, mark the next match as the
+            # If percent complete has reached 100, mark the next match as the
             # current earliest match
             no_live_matches = False
             match_stats['live'] = True
-            percent_complete = match_stats.pop('percent_complete')
-            if match_id == self.earliest_live_id and percent_complete == '100':
+            if match_id == self.earliest_live_id and \
+                    int(match_stats['percent_complete']) == 100:
                 match_ended = True
                 match_stats['live'] = False
                 self.earliest_live_id += 1
@@ -139,7 +139,6 @@ class LiveScheduler:
             # is actually live; a historical backfill should always be done
             # before running this live script
             match_stats['live'] = True
-            del match_stats['percent_complete']
             query = insert(Matches).values(match_stats)
             session.execute(query)
             query = insert(PlayersBySeason).values(player_season_stats)\

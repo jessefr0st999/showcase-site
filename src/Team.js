@@ -15,31 +15,14 @@ import { Circle } from '@mui/icons-material';
 import { useParams, Link } from 'react-router-dom';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 
-import { apiRequester, getRoundName, formatMatchTime } from './helpers.js';
+import { apiRequester } from './helpers.js';
 import { WEBSOCKET_URI } from './secrets.js';
+import { MatchCard } from './Home.js';
 
 function Matches({matches, page, count, onPaginationChange}) {
   return <>
     <Grid container spacing={2}>
-      {matches?.map(match => <Grid item xs={12} key={match.id}>
-        <Card variant={'outlined'}>
-          <CardContent>
-            <Typography gutterBottom variant='h5' component='div' className='live-marker-container'>
-              <span>
-                <Link to={`/match/${match.id}`}>
-                  {`${match.home_team} ${match.home_goals}-${match.home_behinds}-${match.home_score}
-                    vs ${match.away_team} ${match.away_goals}-${match.away_behinds}-${match.away_score}`}
-                </Link>
-                {match.live ? ` (Q${match.quarter} ${formatMatchTime(match.time)})` : ''}
-              </span>
-              {match.live ? <Circle className='live-marker'></Circle> : ''}
-            </Typography>
-            <Typography variant='body2' color='text.secondary'>
-              {getRoundName(match.season, match.round, false)} {match.season}, {match.location}
-            </Typography>
-          </CardContent>
-        </Card>
-      </Grid>)}
+      {matches?.map(match =><MatchCard match={match} key={match.id}></MatchCard>)}
       <Grid item xs={12} key={'pagination'}>
         <Card>
           <CardContent>

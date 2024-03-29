@@ -23,8 +23,8 @@ class Matches(Base):
     away_goals = mapped_column(Integer)
     away_behinds = mapped_column(Integer)
     live = mapped_column(Boolean)
-    quarter = mapped_column(String(3))
     time = mapped_column(String(10))
+    percent_complete = mapped_column(Integer)
 
     player_stats = relationship('PlayerStats', backref='match')
     

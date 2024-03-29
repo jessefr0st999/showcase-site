@@ -73,3 +73,4 @@ CREATE DATABASE site_db;
 - Change allowed variables in websocket/server.py to deployment variables
 - Clean up MUI imports
 - Use MUI-oriented styles (e.g. Box with sx prop)
+- Nicer history interaction on home page (allow forward button to be used)

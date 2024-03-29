@@ -73,11 +73,38 @@ export const getRoundName = (season, round, short) => {
 }
 
 export const formatMatchTime = timeStr => {
+  if (!timeStr) {
+    return '00:00';
+  }
   let [minutesStr, secondsStr] = timeStr.split(':');
+  if (minutesStr.length === 1) {
+    minutesStr = '0' + minutesStr;
+  }
   if (secondsStr.length === 1) {
     secondsStr = '0' + secondsStr;
   }
   return minutesStr + ':' + secondsStr;
+}
+
+export const formatLiveText = match => {
+  switch (true) {
+    case match.percent_complete < 25:
+      return ` (Q1 ${formatMatchTime(match.time)})`;
+    case match.percent_complete === 25:
+      return ' (QT)';
+    case match.percent_complete < 50:
+      return ` (Q2 ${formatMatchTime(match.time)})`;
+    case match.percent_complete === 50:
+      return ' (HT)';
+    case match.percent_complete < 75:
+      return ` (Q3 ${formatMatchTime(match.time)})`;
+    case match.percent_complete === 75:
+      return ' (3QT)';
+    case match.percent_complete < 100:
+      return ` (Q4 ${formatMatchTime(match.time)})`;
+    default:
+      return '';
+  }
 }
 
 export class BaseChartOptions {

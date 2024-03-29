@@ -18,7 +18,7 @@ import { Refresh, Circle } from '@mui/icons-material';
 import { Link, useSearchParams } from 'react-router-dom';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 
-import { apiRequester, calculateAverage, getRoundName, formatMatchTime } from './helpers.js';
+import { apiRequester, calculateAverage, getRoundName, formatLiveText } from './helpers.js';
 import { WEBSOCKET_URI } from './secrets.js';
 
 const currentMatchesUrl = '/api/current_matches';
@@ -26,6 +26,29 @@ const matchesBaseUrl = '/api/matches_by_round';
 const currentLadderUrl = '/api/current_ladder';
 const randomPlayerUrl = '/api/random_player';
 const dataSpanUrl = '/api/data_span';
+
+export function MatchCard({ match }) {
+  const liveText = formatLiveText(match);
+  return <Grid item xs={12}>
+    <Card variant={'outlined'}>
+      <CardContent>
+        <Typography gutterBottom variant='h5' component='div' className='live-marker-container'>
+          <span>
+            <Link to={`/match/${match.id}`}>
+              {`${match.home_team} ${match.home_goals}-${match.home_behinds}-${match.home_score}
+                vs ${match.away_team} ${match.away_goals}-${match.away_behinds}-${match.away_score}`}
+            </Link>
+            {match.live ? liveText : ''}
+          </span>
+          {match.live ? <Circle className='live-marker'></Circle> : ''}
+        </Typography>
+        <Typography variant='body2' color='text.secondary'>
+          {match.location}
+        </Typography>
+      </CardContent>
+    </Card>
+  </Grid>
+}
 
 function Matches({matches, seasonList, roundList, season, round, onSeasonChange, onRoundChange}) {
   return <Grid container spacing={2}>
@@ -62,27 +85,7 @@ function Matches({matches, seasonList, roundList, season, round, onSeasonChange,
         </FormControl>
       </> : null}
     </CardContent></Card></Grid>
-    {matches.map(match =>
-      <Grid item xs={12} key={match.id}>
-        <Card variant={'outlined'}>
-          <CardContent>
-            <Typography gutterBottom variant='h5' component='div' className='live-marker-container'>
-              <span>
-                <Link to={`/match/${match.id}`}>
-                  {`${match.home_team} ${match.home_goals}-${match.home_behinds}-${match.home_score}
-                    vs ${match.away_team} ${match.away_goals}-${match.away_behinds}-${match.away_score}`}
-                </Link>
-                {match.live ? ` (Q${match.quarter} ${formatMatchTime(match.time)})` : ''}
-              </span>
-              {match.live ? <Circle className='live-marker'></Circle> : ''}
-            </Typography>
-            <Typography variant='body2' color='text.secondary'>
-              {match.location}
-            </Typography>
-          </CardContent>
-        </Card>
-      </Grid>
-    )}
+    {matches.map(match =><MatchCard match={match} key={match.id}></MatchCard>)}
   </Grid>
 }
 
