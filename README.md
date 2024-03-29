@@ -68,8 +68,6 @@ CREATE DATABASE site_db;
 - Minify the JS
 - Extend player comparison page to compare individual games
 - Created and modified timestamps
-- Table sorting by different columns
-- Clean up weird time field for live games
 - Some visual effect when a live field updates
 - Condense mobile menu into hamburger
 - Test whether new matches in the same round render as expected on the home page
