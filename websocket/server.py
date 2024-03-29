@@ -2,25 +2,17 @@ import asyncio
 from tornado.web import Application, RequestHandler
 from tornado.websocket import WebSocketHandler
 from tornado.escape import json_decode
+from dotenv import load_dotenv
+import os
 import logging
+
+load_dotenv()
 
 ALLOWED_WS_ORIGINS = [
     'http://127.0.0.1:5000',
     'http://localhost:5000',
     'https://footy-charts.onrender.com',
     'https://footycharts.com.au',
-]
-
-ALLOWED_HTTP_HOST_NAMES = [
-    'localhost',
-]
-
-ALLOWED_HTTP_REMOTE_IPS = [
-    '127.0.0.1',
-    '::1',
-    '13.228.225.19',
-    '18.142.128.26',
-    '54.254.162.138',
 ]
 
 logger = logging.getLogger(__name__)
@@ -54,15 +46,15 @@ class SocketHandler(WebSocketHandler):
 class HttpHandler(RequestHandler):
     def get(self):
         logger.info(f'GET request received from IP {self.request.remote_ip},'
-            f' hostname {self.request.host_name}')
+            f' host {self.request.host}')
         self.write('200 OK')
         
     def post(self):
         logger.info(f'POST request received from IP {self.request.remote_ip},'
-            f' hostname {self.request.host_name}')
-        if self.request.host_name not in ALLOWED_HTTP_HOST_NAMES and \
-                self.request.remote_ip not in ALLOWED_HTTP_REMOTE_IPS:
-            self.write('403 Forbidden')
+            f' host {self.request.host}')
+        auth_header = self.request.headers.get('Authorization')
+        if auth_header != f'Bearer {os.getenv("WEBSOCKET_SECRET")}':
+            self.write('401 Unauthorized')
             return
         message = json_decode(self.request.body)
         SocketHandler.send_message(message)

@@ -104,6 +104,7 @@ class LiveScheduler:
                 new_match_stats = session.query(Matches)\
                     .where(Matches.id == match_id).one()
                 requests.post(os.getenv('WEBSOCKET_HTTP_URI'),
+                    headers={'Authorization': f'Bearer {os.getenv("WEBSOCKET_SECRET")}'},
                     data=json.dumps(self.match_schema.dump(new_match_stats)))
                 # Only update ladder and season averages when a match ends and only
                 # update ladder during the home and away season
@@ -152,6 +153,7 @@ class LiveScheduler:
             new_match_stats = session.query(Matches)\
                 .where(Matches.id == next_match_id).one()
             requests.post(os.getenv('WEBSOCKET_HTTP_URI'),
+                headers={'Authorization': f'Bearer {os.getenv("WEBSOCKET_SECRET")}'},
                 data=json.dumps(self.match_schema.dump(new_match_stats)))
         print(f'Match with ID {next_match_id} found and values upserted; switching to active mode')
         self.earliest_live_id = next_match_id

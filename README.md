@@ -63,7 +63,6 @@ CREATE DATABASE site_db;
 - Consider maintaining a single websocket connection rather than closing when changing page
 - Better scrollboxes for mobile
 - Prevent site from crashing when a request fails
-- Deploy live script
 - Loading spinners and placeholder containers
 - Minify the JS
 - Extend player comparison page to compare individual games
