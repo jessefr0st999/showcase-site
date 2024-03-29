@@ -13,7 +13,7 @@ import { Circle } from '@mui/icons-material';
 import { useParams, Link } from 'react-router-dom';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 
-import { apiRequester, getRoundName } from './helpers.js';
+import { apiRequester, getRoundName, formatMatchTime } from './helpers.js';
 import { WEBSOCKET_URI } from './secrets.js';
 
 const getSurname = x => x.player.name.split('.').slice(-1)[0];
@@ -36,7 +36,7 @@ const renderMatchInfo = match => {
           {' '}{match.home_goals}-{match.home_behinds}-{match.home_score}
           {' '}vs <Link to={`/team/${match.away_team}`}>{match.away_team}</Link>
           {' '}{match.away_goals}-{match.away_behinds}-{match.away_score}
-          {match.live ? ` (Q${match.quarter} ${match.time})` : ''}
+          {match.live ? ` (Q${match.quarter} ${formatMatchTime(match.time)})` : ''}
         </span>
         {match.live ? <Circle className='live-marker'></Circle> : null}
       </Typography>

@@ -72,6 +72,14 @@ export const getRoundName = (season, round, short) => {
   }
 }
 
+export const formatMatchTime = timeStr => {
+  let [minutesStr, secondsStr] = timeStr.split(':');
+  if (secondsStr.length === 1) {
+    secondsStr = '0' + secondsStr;
+  }
+  return minutesStr + ':' + secondsStr;
+}
+
 export class BaseChartOptions {
   responsive = true;
   maintainAspectRatio = false;

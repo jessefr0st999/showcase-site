@@ -15,7 +15,7 @@ import { Circle } from '@mui/icons-material';
 import { useParams, Link } from 'react-router-dom';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 
-import { apiRequester, getRoundName } from './helpers.js';
+import { apiRequester, getRoundName, formatMatchTime } from './helpers.js';
 import { WEBSOCKET_URI } from './secrets.js';
 
 function Matches({matches, page, count, onPaginationChange}) {
@@ -30,7 +30,7 @@ function Matches({matches, page, count, onPaginationChange}) {
                   {`${match.home_team} ${match.home_goals}-${match.home_behinds}-${match.home_score}
                     vs ${match.away_team} ${match.away_goals}-${match.away_behinds}-${match.away_score}`}
                 </Link>
-                {match.live ? ` (Q${match.quarter} ${match.time})` : ''}
+                {match.live ? ` (Q${match.quarter} ${formatMatchTime(match.time)})` : ''}
               </span>
               {match.live ? <Circle className='live-marker'></Circle> : ''}
             </Typography>

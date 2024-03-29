@@ -18,7 +18,7 @@ import { Refresh, Circle } from '@mui/icons-material';
 import { Link, useSearchParams } from 'react-router-dom';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 
-import { apiRequester, calculateAverage, getRoundName } from './helpers.js';
+import { apiRequester, calculateAverage, getRoundName, formatMatchTime } from './helpers.js';
 import { WEBSOCKET_URI } from './secrets.js';
 
 const currentMatchesUrl = '/api/current_matches';
@@ -72,7 +72,7 @@ function Matches({matches, seasonList, roundList, season, round, onSeasonChange,
                   {`${match.home_team} ${match.home_goals}-${match.home_behinds}-${match.home_score}
                     vs ${match.away_team} ${match.away_goals}-${match.away_behinds}-${match.away_score}`}
                 </Link>
-                {match.live ? ` (Q${match.quarter} ${match.time})` : ''}
+                {match.live ? ` (Q${match.quarter} ${formatMatchTime(match.time)})` : ''}
               </span>
               {match.live ? <Circle className='live-marker'></Circle> : ''}
             </Typography>
