@@ -68,7 +68,8 @@ CREATE DATABASE site_db;
 - Extend player comparison page to compare individual games
 - Created and modified timestamps
 - Some visual effect when a live field updates
-- Condense mobile menu into hamburger
 - Test whether new matches in the same round render as expected on the home page
 - Test whether latency between deployed live service and database is minimal (critical for performance of retrieving row and post it to websocket server after upsert)
 - Change allowed variables in websocket/server.py to deployment variables
+- Clean up MUI imports
+- Use MUI-oriented styles (e.g. Box with sx prop)
