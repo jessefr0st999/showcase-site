@@ -16,7 +16,6 @@ from ingest_historical import get_match_data, calculate_ladder
 
 load_dotenv()
 engine = create_engine(os.getenv('DATABASE_URI'))
-WEBSOCKET_URI = 'http://' + os.getenv('WEBSOCKET_HOST')
 # TODO: Update this if running for during season with a different final home
 # and away round
 LAST_HNA_ROUND = 24
@@ -104,7 +103,7 @@ class LiveScheduler:
                 # Notify websocket server of update to each current match
                 new_match_stats = session.query(Matches)\
                     .where(Matches.id == match_id).one()
-                requests.post(WEBSOCKET_URI,
+                requests.post(os.getenv('WEBSOCKET_HTTP_URI'),
                     data=json.dumps(self.match_schema.dump(new_match_stats)))
                 # Only update ladder and season averages when a match ends and only
                 # update ladder during the home and away season
@@ -152,7 +151,7 @@ class LiveScheduler:
             # Notify websocket server of new match
             new_match_stats = session.query(Matches)\
                 .where(Matches.id == next_match_id).one()
-            requests.post(WEBSOCKET_URI,
+            requests.post(os.getenv('WEBSOCKET_HTTP_URI'),
                 data=json.dumps(self.match_schema.dump(new_match_stats)))
         print(f'Match with ID {next_match_id} found and values upserted; switching to active mode')
         self.earliest_live_id = next_match_id
