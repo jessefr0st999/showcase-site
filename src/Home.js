@@ -27,13 +27,14 @@ const currentLadderUrl = '/api/current_ladder';
 const randomPlayerUrl = '/api/random_player';
 const dataSpanUrl = '/api/data_span';
 
-export function MatchCard({ match }) {
+export function MatchCard({ match, animatedIds, stopAnimation }) {
   const liveText = formatLiveText(match);
   return <Grid item xs={12}>
     <Card variant={'outlined'}>
       <CardContent>
         <Typography gutterBottom variant='h5' component='div' className='live-marker-container'>
-          <span>
+          <span className={animatedIds?.includes(match.id) ? 'animate' : ''}
+              onAnimationEnd={e => stopAnimation(match.id)}>
             <Link to={`/match/${match.id}`}>
               {`${match.home_team} ${match.home_goals}-${match.home_behinds}-${match.home_score}
                 vs ${match.away_team} ${match.away_goals}-${match.away_behinds}-${match.away_score}`}
@@ -50,7 +51,8 @@ export function MatchCard({ match }) {
   </Grid>
 }
 
-function Matches({matches, seasonList, roundList, season, round, onSeasonChange, onRoundChange}) {
+function Matches({matches, seasonList, roundList, season, round, onSeasonChange,
+    onRoundChange, animatedIds, stopAnimation}) {
   return <Grid container spacing={2}>
     <Grid item xs={12}><Card><CardContent>
       {seasonList && roundList && season && (round || round === 0) ? <>
@@ -85,7 +87,10 @@ function Matches({matches, seasonList, roundList, season, round, onSeasonChange,
         </FormControl>
       </> : null}
     </CardContent></Card></Grid>
-    {matches.map(match =><MatchCard match={match} key={match.id}></MatchCard>)}
+    {matches.map(match => <MatchCard match={match} key={match.id}
+      animatedIds={animatedIds}
+      stopAnimation={stopAnimation}
+    ></MatchCard>)}
   </Grid>
 }
 
@@ -189,6 +194,9 @@ const renderLadder = ladder => {
 }
 
 function Home() {
+  const [animatedIds, setAnimatedIds] = useState([]);
+  const stopAnimation = id => setAnimatedIds(animatedIds?.filter(x => x !== id));
+
   const [searchParams, setSearchParams] = useSearchParams();
   const [matches, setMatches] = useState([]);
   const [season, setSeason] = useState(null);
@@ -275,10 +283,12 @@ function Home() {
       const newMatches = [...matches];
       newMatches[indexToUpdate] = lastJsonMessage;
       setMatches(newMatches);
+      setAnimatedIds([...animatedIds, lastJsonMessage.id]);
     } else if (lastJsonMessage.season === season &&
         lastJsonMessage.round === round) {
       // Render a new match in the same round
       setMatches([lastJsonMessage, ...matches]);
+      setAnimatedIds([...animatedIds, lastJsonMessage.id]);
     }
   }, [lastJsonMessage]);
 
@@ -295,6 +305,8 @@ function Home() {
             roundList={roundList}
             season={season}
             round={round}
+            animatedIds={animatedIds}
+            stopAnimation={stopAnimation}
             onSeasonChange={e => {
               const newSeason = e.target.value;
               const {min_round, max_round} = dataSpan.find(x => x.season === newSeason);

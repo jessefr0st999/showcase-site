@@ -19,7 +19,7 @@ import { visuallyHidden } from '@mui/utils';
 import { apiRequester, getRoundName, formatLiveText } from './helpers.js';
 import { WEBSOCKET_URI } from './secrets.js';
 
-const renderMatchInfo = match => {
+function MatchInfo({ match, animatedIds, stopAnimation }) {
   if (!match) {
     return null;
   }
@@ -33,7 +33,8 @@ const renderMatchInfo = match => {
   return <Card variant={'outlined'} style={{width: 'min(100%, 800px)', margin: 'auto'}}>
     <CardContent>
       <Typography gutterBottom variant='h5' component='div' className='live-marker-container'>
-        <span>
+        <span className={animatedIds?.includes(match.id) ? 'animate' : ''}
+            onAnimationEnd={e => stopAnimation(match.id)}>
           <Link to={`/team/${match.home_team}`}>{match.home_team}</Link>
           {' '}{match.home_goals}-{match.home_behinds}-{match.home_score}
           {' '}vs <Link to={`/team/${match.away_team}`}>{match.away_team}</Link>
@@ -157,7 +158,7 @@ const renderPositions = playerStats => {
   </TableContainer>
 }
 
-function PlayerStatsTable ({ playerStats }) {
+function PlayerStatsTable ({ playerStats, animatedIds }) {
   if (!playerStats) {
     return;
   }
@@ -244,6 +245,7 @@ function PlayerStatsTable ({ playerStats }) {
         {rows.map(x => <TableRow
             key={'stats-' + x.player.id}
             sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+            className={animatedIds.length ? 'animate' : ''}
           >
             <TableCell align='right'>#{x.player.jumper_number}</TableCell>
             <TableCell><Link to={`/player/${x.player.id}`}>{x.player.name}</Link></TableCell>
@@ -263,6 +265,11 @@ function PlayerStatsTable ({ playerStats }) {
 }
 
 function Match() {
+  const [animatedIds, setAnimatedIds] = useState([]);
+  // stopAnimation is omitted from the match tables as it only needs to be
+  // called once, since the match ID is always the same
+  const stopAnimation = id => setAnimatedIds(animatedIds?.filter(x => x !== id));
+
   const { matchId } = useParams();
   const matchUrl = `/api/match/${matchId}`;
   const [match, setMatch] = useState(null);
@@ -287,6 +294,7 @@ function Match() {
     if (match && match.id == lastJsonMessage.id) {
       // Update the current match
       setMatch(lastJsonMessage);
+      setAnimatedIds([...animatedIds, lastJsonMessage.id]);
     }
   }, [lastJsonMessage]);
 
@@ -295,7 +303,13 @@ function Match() {
       {match ? <>
         <h1>{getRoundName(match.season, match.round, false)}{' '}{match.season}</h1>
         <Grid container spacing={2}>  
-          <Grid item xs={12} md={12}>{renderMatchInfo(match)}</Grid>
+          <Grid item xs={12} md={12}>
+            <MatchInfo
+              match={match}
+              animatedIds={animatedIds}
+              stopAnimation={stopAnimation}
+            ></MatchInfo>
+          </Grid>
           <Grid item container xs={12} md={12} spacing={2}>
             <Grid item xs={12} md={6}>
               <Card variant={'outlined'}>
@@ -325,6 +339,7 @@ function Match() {
                   </Typography>
                   <PlayerStatsTable
                     playerStats={match.player_stats.filter(x => x.player.team == match.home_team)}
+                    animatedIds={animatedIds}
                   ></PlayerStatsTable>
                 </CardContent>
               </Card>
@@ -337,6 +352,7 @@ function Match() {
                   </Typography>
                   <PlayerStatsTable
                     playerStats={match.player_stats.filter(x => x.player.team == match.away_team)}
+                    animatedIds={animatedIds}
                   ></PlayerStatsTable>
                 </CardContent>
               </Card>

@@ -8,10 +8,8 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import CardContent from '@mui/material/CardContent';
-import Typography from '@mui/material/Typography';
 import Pagination from '@mui/material/Pagination';
 import Stack from '@mui/material/Stack';
-import { Circle } from '@mui/icons-material';
 import { useParams, Link } from 'react-router-dom';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 
@@ -19,10 +17,15 @@ import { apiRequester } from './helpers.js';
 import { WEBSOCKET_URI } from './secrets.js';
 import { MatchCard } from './Home.js';
 
-function Matches({matches, page, count, onPaginationChange}) {
+function Matches({matches, page, count, onPaginationChange, animatedIds, stopAnimation}) {
   return <>
     <Grid container spacing={2}>
-      {matches?.map(match =><MatchCard match={match} key={match.id}></MatchCard>)}
+      {matches?.map(match =>
+        <MatchCard match={match} key={match.id}
+          animatedIds={animatedIds}
+          stopAnimation={stopAnimation}
+        ></MatchCard>
+      )}
       <Grid item xs={12} key={'pagination'}>
         <Card>
           <CardContent>
@@ -69,6 +72,9 @@ const renderPlayers = players => {
 }
 
 function Team() {
+  const [animatedIds, setAnimatedIds] = useState([]);
+  const stopAnimation = id => setAnimatedIds(animatedIds?.filter(x => x !== id));
+
   const { teamName } = useParams();
   const pageSize = 6;
   const matchesBaseUrl = `/api/matches_by_team/${teamName}?page_size=${pageSize}`;
@@ -103,11 +109,12 @@ function Team() {
       return;
     }
     const indexToUpdate = matches.findIndex(x => x.id === lastJsonMessage.id);
-    if (indexToUpdate === -1) {
+    if (indexToUpdate !== -1) {
       // Update an existing match
       const newMatches = [...matches];
       newMatches[indexToUpdate] = lastJsonMessage;
       setMatches(newMatches);
+      setAnimatedIds([...animatedIds, lastJsonMessage.id]);
     }
   }, [lastJsonMessage]);
 
@@ -121,6 +128,8 @@ function Team() {
             page={page}
             count={Math.ceil(numMatches / pageSize)}
             onPaginationChange={(e, page) => setPage(page)}
+            animatedIds={animatedIds}
+            stopAnimation={stopAnimation}
           ></Matches>
         </Grid>
         <Grid item xs={12} md={4}>{renderPlayers(players)}</Grid>

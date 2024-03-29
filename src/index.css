@@ -105,3 +105,40 @@ tr.ladder-divider > td {
 .live-marker {
   fill: green !important;
 }
+
+tr.animate > td,
+tr.animate > td > a {
+  animation: flash-colour 1s linear;
+}
+
+span.animate,
+.animate > a {
+  animation: flash-colour-size 1s linear;
+}
+
+@keyframes flash-colour {
+  0% {
+    color: unset;
+  }
+  50% {
+    color: green;
+  }
+  100% {
+    color: unset;
+  }
+}
+
+@keyframes flash-colour-size {
+  0% {
+    color: unset;
+    transform: scale(1);
+  }
+  50% {
+    color: green;
+    transform: scale(1.05);
+  }
+  100% {
+    color: unset;
+    transform: scale(1);
+  }
+}

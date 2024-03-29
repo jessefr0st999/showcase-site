@@ -67,10 +67,10 @@ CREATE DATABASE site_db;
 - Minify the JS
 - Extend player comparison page to compare individual games
 - Created and modified timestamps
-- Some visual effect when a live field updates
 - Test whether new matches in the same round render as expected on the home page
 - Test whether latency between deployed live service and database is minimal (critical for performance of retrieving row and post it to websocket server after upsert)
 - Change allowed variables in websocket/server.py to deployment variables
 - Clean up MUI imports
 - Use MUI-oriented styles (e.g. Box with sx prop)
 - Nicer history interaction on home page (allow forward button to be used)
+- Consider useContext or some other cleaner implementation of live animations
