@@ -120,8 +120,8 @@ export class BaseChartOptions {
 }
 
 export const chartColours = ['red', 'blue', 'gold', 'green', 'magenta', 'orange', 'cyan'];
-const visibleDatasets = ['disposals', 'marks', 'tackles', 'hitouts'];
-const hiddenDatasets = ['kicks', 'handballs', 'goals'];
+const visibleDatasets = ['goals', 'disposals', 'marks', 'tackles', 'hitouts'];
+const hiddenDatasets = ['kicks', 'handballs'];
 export class BaseChartData {
   labels = [];
   datasets = [...visibleDatasets, ...hiddenDatasets].map((x, i) => ({

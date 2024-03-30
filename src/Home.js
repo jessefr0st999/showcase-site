@@ -117,7 +117,7 @@ const renderRandomPlayer = (randomPlayer, onRefresh) => {
                   </TableCell>
                 </Tooltip>
                 <TableCell align='right'>Games</TableCell>
-                <TableCell align='right'>Goals</TableCell>
+                <TableCell align='right'>Score</TableCell>
                 <TableCell align='right'>Av. disposals</TableCell>
                 <TableCell align='right'>Av. kicks</TableCell>
                 <TableCell align='right'>Av. handballs</TableCell>
@@ -133,7 +133,7 @@ const renderRandomPlayer = (randomPlayer, onRefresh) => {
                 >
                   <TableCell>{x.season}</TableCell>
                   <TableCell align='right'>{x.games}</TableCell>
-                  <TableCell align='right'>{x.goals}</TableCell>
+                  <TableCell align='right'>{x.goals}.{x.behinds}</TableCell>
                   <TableCell align='right'>{calculateAverage('disposals', x)}</TableCell>
                   <TableCell align='right'>{calculateAverage('kicks', x)}</TableCell>
                   <TableCell align='right'>{calculateAverage('handballs', x)}</TableCell>

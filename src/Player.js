@@ -79,7 +79,7 @@ function MatchHistory({recentStats, page, count, onPaginationChange}) {
           <TableHead>
             <TableRow>
               <TableCell></TableCell>
-              <TableCell align='right'>Goals</TableCell>
+              <TableCell align='right'>Score</TableCell>
               <TableCell align='right'>Disposals</TableCell>
               <TableCell align='right'>Kicks</TableCell>
               <TableCell align='right'>Handballs</TableCell>
@@ -96,7 +96,7 @@ function MatchHistory({recentStats, page, count, onPaginationChange}) {
                 <TableCell><Link to={`/match/${x.match.id}`}>
                   {getRoundName(x.season, x.match.round, false)} {x.season}
                 </Link></TableCell>
-                <TableCell align='right'>{x.goals}</TableCell>
+                <TableCell align='right'>{x.goals}.{x.behinds}</TableCell>
                 <TableCell align='right'>{x.kicks + x.handballs}</TableCell>
                 <TableCell align='right'>{x.kicks}</TableCell>
                 <TableCell align='right'>{x.handballs}</TableCell>
@@ -149,28 +149,28 @@ function Player() {
         label: 'games',
         data: [],
         backgroundColor: 'black',
-        hidden: true,
+        hidden: false,
       });
       values[0].toReversed().forEach((x, i) => {
         _seasonChartData.labels[i] = x.season;
         _seasonChartData.datasets[0].data[i] = x.games;
-        _seasonChartData.datasets[1].data[i] = (x.kicks + x.handballs) / x.games;
-        _seasonChartData.datasets[2].data[i] = x.marks / x.games;
-        _seasonChartData.datasets[3].data[i] = x.tackles / x.games;
-        _seasonChartData.datasets[4].data[i] = x.hitouts / x.games;
-        _seasonChartData.datasets[5].data[i] = x.kicks / x.games;
-        _seasonChartData.datasets[6].data[i] = x.handballs / x.games;
-        _seasonChartData.datasets[7].data[i] = x.goals;
+        _seasonChartData.datasets[1].data[i] = x.goals;
+        _seasonChartData.datasets[2].data[i] = (x.kicks + x.handballs) / x.games;
+        _seasonChartData.datasets[3].data[i] = x.marks / x.games;
+        _seasonChartData.datasets[4].data[i] = x.tackles / x.games;
+        _seasonChartData.datasets[5].data[i] = x.hitouts / x.games;
+        _seasonChartData.datasets[6].data[i] = x.kicks / x.games;
+        _seasonChartData.datasets[7].data[i] = x.handballs / x.games;
       });
       values[1].toReversed().forEach((x, i) => {
         _recentChartData.labels[i] = `${getRoundName(x.season, x.match.round, true)} ${x.season}`;
-        _recentChartData.datasets[0].data[i] = (x.kicks + x.handballs);
-        _recentChartData.datasets[1].data[i] = x.marks;
-        _recentChartData.datasets[2].data[i] = x.tackles;
-        _recentChartData.datasets[3].data[i] = x.hitouts;
-        _recentChartData.datasets[4].data[i] = x.kicks;
-        _recentChartData.datasets[5].data[i] = x.handballs;
-        _recentChartData.datasets[6].data[i] = x.goals;
+        _recentChartData.datasets[0].data[i] = x.goals;
+        _recentChartData.datasets[1].data[i] = (x.kicks + x.handballs);
+        _recentChartData.datasets[2].data[i] = x.marks;
+        _recentChartData.datasets[3].data[i] = x.tackles;
+        _recentChartData.datasets[4].data[i] = x.hitouts;
+        _recentChartData.datasets[5].data[i] = x.kicks;
+        _recentChartData.datasets[6].data[i] = x.handballs;
       });
       setSeasonChartData(_seasonChartData);
       setRecentChartData(_recentChartData);
